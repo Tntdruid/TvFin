@@ -25,7 +25,9 @@ var I18n = (function () {
             language: 'Sprog', unknown: 'Ukendt',
             sort: 'Sortér', sort_name: 'Navn', sort_added: 'Dato tilføjet', sort_released: 'Udgivelsesdato',
             sort_rating: 'Bedømmelse', sort_played: 'Sidst set', sort_random: 'Tilfældig',
-            ascending: 'Stigende', descending: 'Faldende'
+            ascending: 'Stigende', descending: 'Faldende',
+            view: 'Visning', view_auto: 'Automatisk', view_poster: 'Plakater', view_posterCard: 'Plakatkort',
+            view_thumb: 'Tommel', view_thumbCard: 'Tommel kort', view_banner: 'Banner', view_list: 'Liste'
         },
         en: {
             _name: 'English',
@@ -51,7 +53,9 @@ var I18n = (function () {
             language: 'Language', unknown: 'Unknown',
             sort: 'Sort', sort_name: 'Name', sort_added: 'Date added', sort_released: 'Release date',
             sort_rating: 'Rating', sort_played: 'Last played', sort_random: 'Random',
-            ascending: 'Ascending', descending: 'Descending'
+            ascending: 'Ascending', descending: 'Descending',
+            view: 'View', view_auto: 'Automatic', view_poster: 'Posters', view_posterCard: 'Poster cards',
+            view_thumb: 'Thumbs', view_thumbCard: 'Thumb cards', view_banner: 'Banners', view_list: 'List'
         },
         de: {
             _name: 'Deutsch',
@@ -77,7 +81,9 @@ var I18n = (function () {
             language: 'Sprache', unknown: 'Unbekannt',
             sort: 'Sortieren', sort_name: 'Name', sort_added: 'Hinzugefügt', sort_released: 'Erscheinungsdatum',
             sort_rating: 'Bewertung', sort_played: 'Zuletzt gesehen', sort_random: 'Zufällig',
-            ascending: 'Aufsteigend', descending: 'Absteigend'
+            ascending: 'Aufsteigend', descending: 'Absteigend',
+            view: 'Ansicht', view_auto: 'Automatisch', view_poster: 'Poster', view_posterCard: 'Posterkarten',
+            view_thumb: 'Vorschaubilder', view_thumbCard: 'Vorschaukarten', view_banner: 'Banner', view_list: 'Liste'
         },
         sv: {
             _name: 'Svenska',
@@ -103,7 +109,9 @@ var I18n = (function () {
             language: 'Språk', unknown: 'Okänt',
             sort: 'Sortera', sort_name: 'Namn', sort_added: 'Datum tillagd', sort_released: 'Utgivningsdatum',
             sort_rating: 'Betyg', sort_played: 'Senast sedd', sort_random: 'Slumpvis',
-            ascending: 'Stigande', descending: 'Fallande'
+            ascending: 'Stigande', descending: 'Fallande',
+            view: 'Visning', view_auto: 'Automatisk', view_poster: 'Affischer', view_posterCard: 'Affischkort',
+            view_thumb: 'Miniatyrer', view_thumbCard: 'Miniatyrkort', view_banner: 'Banderoller', view_list: 'Lista'
         },
         nb: {
             _name: 'Norsk',
@@ -129,7 +137,9 @@ var I18n = (function () {
             language: 'Språk', unknown: 'Ukjent',
             sort: 'Sorter', sort_name: 'Navn', sort_added: 'Dato lagt til', sort_released: 'Utgivelsesdato',
             sort_rating: 'Vurdering', sort_played: 'Sist sett', sort_random: 'Tilfeldig',
-            ascending: 'Stigende', descending: 'Synkende'
+            ascending: 'Stigende', descending: 'Synkende',
+            view: 'Visning', view_auto: 'Automatisk', view_poster: 'Plakater', view_posterCard: 'Plakatkort',
+            view_thumb: 'Miniatyrbilder', view_thumbCard: 'Miniatyrkort', view_banner: 'Bannere', view_list: 'Liste'
         }
     };
     var order = ['da', 'en', 'de', 'sv', 'nb'];

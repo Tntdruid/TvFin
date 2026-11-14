@@ -1,7 +1,7 @@
 /* Jellyfin API-klient. Skrevet uden ?. og ?? så den kører på ældre Tizen-TV'er. */
 var Api = (function () {
     var CLIENT = 'TvFin';
-    var VERSION = '1.2.1';
+    var VERSION = '1.3.0';
     var STORE_KEY = 'tvfin';
     var isTizen = !!window.tizen;
 
@@ -134,7 +134,7 @@ var Api = (function () {
     }
 
     // ---- Data ----
-    var FIELDS = 'Fields=PrimaryImageAspectRatio,Overview,ProductionYear,ParentId&EnableImageTypes=Primary,Thumb,Backdrop&ImageTypeLimit=1';
+    var FIELDS = 'Fields=PrimaryImageAspectRatio,Overview,ProductionYear,ParentId&EnableImageTypes=Primary,Thumb,Backdrop,Banner&ImageTypeLimit=1';
 
     function resume() {
         var q = 'MediaTypes=Video&Limit=24&' + FIELDS;
@@ -213,6 +213,20 @@ var Api = (function () {
             return state.server + '/Items/' + it.ParentBackdropItemId + '/Images/Backdrop/0?fillWidth=1920&quality=70&tag=' + it.ParentBackdropImageTags[0] + '&api_key=' + state.token;
         }
         return null;
+    }
+
+    // Banner-billede (bredt 1000x185); falder tilbage til tommel/baggrund.
+    function bannerUrls(it, height) {
+        var tags = it.ImageTags || {};
+        var list = [];
+        function u(id, tag) {
+            return state.server + '/Items/' + id + '/Images/Banner?fillHeight=' + height + '&quality=85' + (tag ? '&tag=' + tag : '') + '&api_key=' + state.token;
+        }
+        if (tags.Banner) list.push(u(it.Id, tags.Banner));
+        if (it.ParentBannerItemId) list.push(u(it.ParentBannerItemId, it.ParentBannerImageTag));
+        if (!tags.Banner) list.push(u(it.Id));
+        if (it.SeriesId && !it.ParentBannerItemId) list.push(u(it.SeriesId));
+        return list.concat(imageUrls(it, true, height * 2));
     }
 
     // Returnerer en prioriteret liste af billed-URL'er. Appen prøver dem i rækkefølge (onerror -> næste),
@@ -341,7 +355,7 @@ var Api = (function () {
     return {
         state: state, isTizen: isTizen, connect: connect, logout: logout, validateSession: validateSession,
         qcInitiate: qcInitiate, qcCheck: qcCheck, qcAuthenticate: qcAuthenticate,
-        resume: resume, nextUp: nextUp, views: views, children: children, item: item, imageUrls: imageUrls, chapterImageUrl: chapterImageUrl, backdropUrl: backdropUrl,
+        resume: resume, nextUp: nextUp, views: views, children: children, item: item, imageUrls: imageUrls, bannerUrls: bannerUrls, chapterImageUrl: chapterImageUrl, backdropUrl: backdropUrl,
         setPlayed: setPlayed, setFavorite: setFavorite, search: search, nextEpisode: nextEpisode,
         subtitleUrl: subtitleUrl, savePrefs: savePrefs, SORTS: SORTS,
         playbackInfo: playbackInfo, report: report, stopEncoding: stopEncoding

@@ -2,6 +2,18 @@
 
 Alle ændringer i TvFin. Opdater TV'et med `./update.sh` på serveren.
 
+## 1.3.0 – 2026-11-14
+
+### Nyt
+- **Visninger i mapper** (som i Jellyfin): knappen *▦ Visning* skifter mellem
+  *Automatisk*, *Plakater*, *Plakatkort*, *Tommel*, *Tommel kort*, *Banner* og *Liste*.
+  Valget huskes pr. mappe – også inde i serier og sæsoner.
+  - *Liste* viser et lille billede med titel, år, spilletid, bedømmelse og en kort beskrivelse.
+  - *Banner* bruger Jellyfins banner-billeder og falder tilbage til tommel/baggrund.
+
+### Rettet
+- Sprogknappen på server- og loginskærmen står nu på sin egen linje, så ned-pil fra feltet går til *Forbind*.
+
 ## 1.2.1 – 2026-11-14
 
 ### Rettet

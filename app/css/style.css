@@ -183,6 +183,48 @@ body:not(.playing) #av-player { display: none; }
 }
 
 .grid { padding: 20px 70px; }
+
+/* Plakatkort / Tommel kort: billede med tekst i en boks */
+.card.boxed { background: var(--bg2); border-radius: 14px; padding-bottom: 14px; }
+.card.boxed .poster { border-radius: 14px 14px 0 0; }
+.card.boxed .card-title, .card.boxed .card-sub { padding: 0 16px; }
+.card.boxed.focused { background: #fff; }
+.card.boxed.focused .card-title { color: #111; }
+.card.boxed.focused .card-sub { color: #555; }
+
+/* Banner (1000x185) */
+.card.banner { width: 860px; }
+.card.banner .poster { padding-top: 18.5%; }
+
+/* Liste */
+.grid.list { padding: 20px 70px; }
+.list-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    margin: 0 10px 14px;
+    padding: 12px;
+    border-radius: 14px;
+    background: var(--bg2);
+    border: 4px solid transparent;
+    cursor: pointer;
+    transition: transform .12s;
+}
+.list-item.focused { border-color: var(--focus); transform: scale(1.01); }
+.list-img {
+    position: relative; flex: 0 0 auto;
+    width: 120px; height: 180px;
+    border-radius: 10px; overflow: hidden; background: var(--card);
+}
+.list-img.wide { width: 280px; height: 158px; }
+.list-img .badge { width: 32px; height: 32px; line-height: 32px; font-size: 20px; right: 6px; top: 6px; }
+.list-img .poster-fallback { font-size: 18px; }
+.list-text { flex: 1; margin-left: 28px; min-width: 0; }
+.list-text .card-title { margin-top: 0; }
+.list-overview {
+    margin-top: 8px; color: var(--muted); font-size: 22px; line-height: 1.4;
+    max-height: 62px; overflow: hidden;
+}
 .overview { margin: 10px 80px 0; max-width: 1400px; color: var(--muted); font-size: 24px; line-height: 1.4; max-height: 136px; overflow: hidden; }
 
 /* ---------- Detaljeside ---------- */

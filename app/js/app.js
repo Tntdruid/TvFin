@@ -90,10 +90,7 @@ var App = (function () {
     // ---------- Kort ----------
     function isWide(it) { return it.Type === 'Episode' || it.Type === 'Video' || it.Type === 'CollectionFolder' || it.Type === 'UserView'; }
 
-    function card(it, wide, keyPrefix) {
-        var urls = Api.imageUrls(it, wide, wide ? 420 : 560);
-        var ud = it.UserData || {};
-        var pct = ud.PlayedPercentage || 0;
+    function cardTexts(it, keyPrefix) {
         var title = it.Name, sub = '';
         if (it.Type === 'Episode') {
             title = it.SeriesName || it.Name;
@@ -102,14 +99,56 @@ var App = (function () {
         } else if (it.ProductionYear && !it.IsFolder) {
             sub = String(it.ProductionYear);
         }
-        return '<div class="card focusable' + (wide ? ' wide' : '') + '" data-key="' + keyPrefix + '-' + it.Id + '" data-id="' + it.Id + '" data-action="item">' +
-            '<div class="poster"><span class="poster-fallback">' + esc(it.Name) + '</span>' +
+        return { title: title, sub: sub };
+    }
+
+    // Billede + fallback-navn + set-mærke + fremskridt (fælles for alle visninger)
+    function imageBlock(it, urls) {
+        var ud = it.UserData || {};
+        var pct = ud.PlayedPercentage || 0;
+        return '<span class="poster-fallback">' + esc(it.Name) + '</span>' +
             (urls.length ? '<img class="poster-img" src="' + esc(urls[0]) + '" data-alt="' + esc(urls.slice(1).join('|')) +
                 '" onerror="App.imgErr(this)" alt="">' : '') +
             (ud.Played ? '<span class="badge">✓</span>' : '') +
-            (pct > 0 && pct < 100 ? '<div class="progress"><i style="width:' + pct + '%"></i></div>' : '') +
-            '</div><div class="card-title">' + esc(title) + '</div>' +
-            (sub ? '<div class="card-sub">' + esc(sub) + '</div>' : '') + '</div>';
+            (pct > 0 && pct < 100 ? '<div class="progress"><i style="width:' + pct + '%"></i></div>' : '');
+    }
+
+    // mode: undefined/'auto' | 'poster' | 'posterCard' | 'thumb' | 'thumbCard' | 'banner' | 'list'
+    function card(it, wide, keyPrefix, mode) {
+        if (mode === 'list') return listItem(it, keyPrefix);
+        var cls = 'card focusable';
+        var urls;
+        if (mode === 'banner') {
+            cls += ' banner';
+            urls = Api.bannerUrls(it, 300);
+        } else {
+            if (mode === 'poster' || mode === 'posterCard') wide = false;
+            if (mode === 'thumb' || mode === 'thumbCard') wide = true;
+            if (wide) cls += ' wide';
+            if (mode === 'posterCard' || mode === 'thumbCard') cls += ' boxed';
+            urls = Api.imageUrls(it, wide, wide ? 420 : 560);
+        }
+        var tx = cardTexts(it, keyPrefix);
+        return '<div class="' + cls + '" data-key="' + keyPrefix + '-' + it.Id + '" data-id="' + it.Id + '" data-action="item">' +
+            '<div class="poster">' + imageBlock(it, urls) + '</div>' +
+            '<div class="card-title">' + esc(tx.title) + '</div>' +
+            (tx.sub ? '<div class="card-sub">' + esc(tx.sub) + '</div>' : '') + '</div>';
+    }
+
+    function listItem(it, keyPrefix) {
+        var wide = isWide(it);
+        var tx = cardTexts(it, keyPrefix);
+        var meta = [];
+        if (tx.sub) meta.push(tx.sub);
+        if (it.RunTimeTicks && !it.IsFolder) meta.push(runtimeText(it.RunTimeTicks));
+        if (it.CommunityRating) meta.push('★ ' + it.CommunityRating.toFixed(1));
+        var overview = it.Overview ? it.Overview.replace(/<[^>]+>/g, ' ') : '';
+        return '<div class="list-item focusable" data-key="' + keyPrefix + '-' + it.Id + '" data-id="' + it.Id + '" data-action="item">' +
+            '<div class="list-img' + (wide ? ' wide' : '') + '">' + imageBlock(it, Api.imageUrls(it, wide, wide ? 240 : 300)) + '</div>' +
+            '<div class="list-text"><div class="card-title">' + esc(tx.title) + '</div>' +
+            (meta.length ? '<div class="card-sub">' + esc(meta.join('  ·  ')) + '</div>' : '') +
+            (overview ? '<div class="list-overview">' + esc(overview) + '</div>' : '') +
+            '</div></div>';
     }
 
     function row(title, items, wide, key) {
@@ -224,8 +263,8 @@ var App = (function () {
                     '<p class="muted">' + esc(t('connect_hint')) + '</p>' +
                     '<input id="server-input" class="input focusable" data-key="input" data-submit="connect" type="text" value="' + esc(prev) + '" placeholder="192.168.1.20" autocomplete="off">' +
                     '<div class="btn focusable primary" data-action="connect" data-key="connect">' + esc(t('connect')) + '</div>' +
-                    '<div class="btn focusable" data-action="lang" data-key="lang">🌐 ' + esc(I18n.name) + '</div>' +
-                    '<p class="error" id="server-error"></p></div>';
+                    '<p class="error" id="server-error"></p>' +
+                    '<div class="btn small focusable" data-action="lang" data-key="lang">🌐 ' + esc(I18n.name) + '</div></div>';
             },
             action: async function (a) {
                 if (a === 'lang') { switchLanguage(); return; }
@@ -288,8 +327,8 @@ var App = (function () {
                     '<p class="muted small">' + esc(t('server')) + ': ' + esc(Api.state.serverName || Api.state.server) + '</p>' +
                     '<p class="error" id="qc-msg"></p>' +
                     '<div class="btn-row"><div class="btn focusable" data-action="newcode" data-key="newcode">' + esc(t('new_code')) + '</div>' +
-                    '<div class="btn focusable" data-action="server" data-key="server">' + esc(t('change_server')) + '</div>' +
-                    '<div class="btn focusable" data-action="lang" data-key="lang">🌐 ' + esc(I18n.name) + '</div></div></div>';
+                    '<div class="btn focusable" data-action="server" data-key="server">' + esc(t('change_server')) + '</div></div>' +
+                    '<div class="btn small focusable" data-action="lang" data-key="lang">🌐 ' + esc(I18n.name) + '</div></div>';
             },
             mounted: startQc,
             destroy: function () { alive = false; stopPoll(); },
@@ -358,17 +397,30 @@ var App = (function () {
         try { localStorage.setItem(SORT_KEY, JSON.stringify(all)); } catch (e) { /* ignorer */ }
     }
 
+    // Visning (plakater, tommel, banner, liste …) huskes pr. mappe
+    var VIEW_KEY = 'tvfin-view';
+    var VIEW_ORDER = ['auto', 'poster', 'posterCard', 'thumb', 'thumbCard', 'banner', 'list'];
+    function loadViews() { try { return JSON.parse(localStorage.getItem(VIEW_KEY) || '{}'); } catch (e) { return {}; } }
+    function getView(id) { return loadViews()[id] || 'auto'; }
+    function setView(id, v) {
+        var all = loadViews();
+        all[id] = v;
+        try { localStorage.setItem(VIEW_KEY, JSON.stringify(all)); } catch (e) { /* ignorer */ }
+    }
+
     Screens.library = function (params) {
         var parent = params.item, items = {};
         var sortable = parent.Type !== 'Series' && parent.Type !== 'Season';
         return {
             render: async function () {
                 var sort = sortable ? getSort(parent.Id) : null;
+                var view = getView(parent.Id);
                 var r = await Api.children(parent, sort);
                 var list = r.Items || [];
                 list.forEach(function (it) { items[it.Id] = it; });
                 var head = parent.SeriesName ? parent.SeriesName + ' – ' + parent.Name : parent.Name;
                 var html = '<div class="screen" data-scroll="y"><header class="topbar"><div class="logo">TvFin</div><div class="who">' + esc(head) + '</div>';
+                html += '<div class="btn small focusable" data-action="view" data-key="view">▦ ' + esc(t('view')) + ': ' + esc(t('view_' + view)) + '</div>';
                 if (sortable) {
                     html += '<div class="btn small focusable" data-action="sort" data-key="sort">⇅ ' + esc(t('sort')) + ': ' + esc(t('sort_' + sort.key)) + '</div>';
                     if (sort.key !== 'random') {
@@ -379,13 +431,19 @@ var App = (function () {
                 if (parent.Overview && (parent.Type === 'Series' || parent.Type === 'Season')) {
                     html += '<p class="overview">' + esc(parent.Overview) + '</p>';
                 }
-                html += '<div class="grid">' + list.map(function (it) { return card(it, isWide(it), 'lib'); }).join('') + '</div>';
+                html += '<div class="grid' + (view === 'list' ? ' list' : '') + '">' +
+                    list.map(function (it) { return card(it, isWide(it), 'lib', view); }).join('') + '</div>';
                 if (!list.length) html += '<p class="muted pad">' + esc(t('empty')) + '</p>';
                 return html + '</div>';
             },
-            initialFocus: '.grid .card',
+            initialFocus: '.grid [data-action="item"]',
             action: function (a, el) {
                 if (a === 'item') openItem(items[el.getAttribute('data-id')]);
+                else if (a === 'view') {
+                    var v = getView(parent.Id);
+                    setView(parent.Id, VIEW_ORDER[(VIEW_ORDER.indexOf(v) + 1) % VIEW_ORDER.length]);
+                    refresh();
+                }
                 else if (a === 'sort') {
                     var cur = getSort(parent.Id);
                     var key = SORT_ORDER[(SORT_ORDER.indexOf(cur.key) + 1) % SORT_ORDER.length];
