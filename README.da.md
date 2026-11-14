@@ -5,7 +5,7 @@
 - **Quick Connect**-login (ingen tastatur nødvendigt)
 - **Fortsæt med at se** / **Næste afsnit** / biblioteker
 - Afspiller med Samsungs AVPlay (direkte afspilning af mkv/mp4/HEVC m.m., ellers omkoder serveren til HLS)
-- Infoside med kapitler, lyd/undertekst-valg, automatisk næste afsnit, søgning, sortering, visninger og 5 sprog – se [CHANGELOG.da.md](CHANGELOG.da.md)
+- Infoside med kapitler, lyd/undertekst-valg, automatisk næste afsnit, søgning, sortering, visninger, favoritter og senest tilføjet, flere brugere og 5 sprog – se [CHANGELOG.da.md](CHANGELOG.da.md)
 - **Husker hvor du er nået til** – positionen gemmes på Jellyfin-serveren (hvert 10. sek, ved pause, spol og stop), så den også passer med telefonen osv.
 
 ## Skærmbilleder
@@ -18,6 +18,7 @@
 | ![Afspiller med undertekster](docs/screenshots/player.png) | ![Menu til lyd og undertekster](docs/screenshots/tracks.png) |
 | ![Bibliotek (plakater)](docs/screenshots/library.png) | ![Listevisning](docs/screenshots/list.png) |
 | ![Søgning](docs/screenshots/search.png) | ![Login med Quick Connect](docs/screenshots/login.png) |
+| ![Favoritter og senest tilføjet](docs/screenshots/homerows.png) | ![Hvem ser med?](docs/screenshots/users.png) |
 
 _Demo-indhold med opdigtede titler og genereret grafik._
 

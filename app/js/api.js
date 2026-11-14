@@ -1,22 +1,65 @@
 /* Jellyfin API client. Written without ?. and ?? so it runs on older Tizen TVs. */
 var Api = (function () {
     var CLIENT = 'TvFin';
-    var VERSION = '1.3.1';
+    var VERSION = '1.4.0';
     var STORE_KEY = 'tvfin';
     var isTizen = !!window.tizen;
 
     // prefs: { audioLang, subLang } – last chosen audio/subtitle language ('off' = no subtitles)
-    var state = { server: null, token: null, userId: null, userName: null, serverName: null, deviceId: null, prefs: {} };
+    // accounts: saved users [{ server, serverName, userId, userName, token, deviceId, imageTag }].
+    // The top-level server/token/userId/... fields mirror the active account.
+    var state = { server: null, token: null, userId: null, userName: null, serverName: null, deviceId: null, imageTag: null, prefs: {}, accounts: [] };
+
+    // Device ID used for a sign-in in progress (each user gets its own device ID, so Jellyfin
+    // keeps their sessions apart on the same TV).
+    var pendingDeviceId = null;
+
+    function newDeviceId() {
+        return 'tvfin-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+    }
 
     function load() {
         try {
             var saved = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
             for (var k in saved) if (saved.hasOwnProperty(k)) state[k] = saved[k];
         } catch (e) { /* no storage */ }
-        if (!state.deviceId) {
-            state.deviceId = 'tvfin-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
-            save();
+        if (!state.accounts) state.accounts = [];
+        if (!state.deviceId) state.deviceId = newDeviceId();
+        // Migrate from the single-user version
+        if (state.token && state.userId && !findAccount(state.server, state.userId)) {
+            state.accounts.push(currentAsAccount());
         }
+        save();
+    }
+
+    function currentAsAccount() {
+        return {
+            server: state.server, serverName: state.serverName, userId: state.userId, userName: state.userName,
+            token: state.token, deviceId: state.deviceId, imageTag: state.imageTag
+        };
+    }
+
+    function findAccount(server, userId) {
+        for (var i = 0; i < state.accounts.length; i++) {
+            var a = state.accounts[i];
+            if (a.server === server && a.userId === userId) return a;
+        }
+        return null;
+    }
+
+    function switchTo(acc) {
+        state.server = acc.server; state.serverName = acc.serverName; state.userId = acc.userId;
+        state.userName = acc.userName; state.token = acc.token; state.deviceId = acc.deviceId; state.imageTag = acc.imageTag;
+        save();
+    }
+
+    function isCurrent(acc) {
+        return !!state.token && acc.server === state.server && acc.userId === state.userId;
+    }
+
+    function userImageUrl(acc) {
+        if (!acc.imageTag) return null;
+        return acc.server + '/Users/' + acc.userId + '/Images/Primary?fillHeight=240&quality=90&tag=' + acc.imageTag;
     }
 
     function save() {
@@ -25,10 +68,11 @@ var Api = (function () {
 
     function deviceName() { return isTizen ? 'Samsung TV' : 'Browser'; }
 
-    function authHeader() {
+    // pending=true: sign-in in progress – use its own device ID and no token
+    function authHeader(pending) {
         var h = 'MediaBrowser Client="' + CLIENT + '", Device="' + deviceName() + '", DeviceId="' +
-            state.deviceId + '", Version="' + VERSION + '"';
-        if (state.token) h += ', Token="' + state.token + '"';
+            (pending ? pendingDeviceId : state.deviceId) + '", Version="' + VERSION + '"';
+        if (state.token && !pending) h += ', Token="' + state.token + '"';
         return h;
     }
 
@@ -39,8 +83,8 @@ var Api = (function () {
         });
     }
 
-    async function request(method, path, body, server, timeoutMs) {
-        var headers = { 'Authorization': authHeader() };
+    async function request(method, path, body, server, timeoutMs, pending) {
+        var headers = { 'Authorization': authHeader(pending) };
         var opts = { method: method, headers: headers };
         if (body !== undefined) {
             headers['Content-Type'] = 'application/json';
@@ -87,7 +131,8 @@ var Api = (function () {
             try {
                 var info = await request('GET', '/System/Info/Public', undefined, list[i], 5000);
                 if (info && info.Id) {
-                    if (state.server !== list[i]) { state.token = null; state.userId = null; }
+                    // The active account (if any) stays saved in state.accounts
+                    if (state.server !== list[i]) { state.token = null; state.userId = null; state.userName = null; }
                     state.server = list[i];
                     state.serverName = info.ServerName;
                     save();
@@ -99,36 +144,57 @@ var Api = (function () {
     }
 
     // ---- Quick Connect ----
+    // Each Quick Connect sign-in gets a fresh device ID (see pendingDeviceId).
     async function qcInitiate() {
-        try { return await request('POST', '/QuickConnect/Initiate'); } catch (e) {
-            if (e.status === 404 || e.status === 405) return await request('GET', '/QuickConnect/Initiate');
+        pendingDeviceId = newDeviceId();
+        try { return await request('POST', '/QuickConnect/Initiate', undefined, undefined, undefined, true); } catch (e) {
+            if (e.status === 404 || e.status === 405) return await request('GET', '/QuickConnect/Initiate', undefined, undefined, undefined, true);
             throw e;
         }
     }
     function qcCheck(secret) {
-        return request('GET', '/QuickConnect/Connect?secret=' + encodeURIComponent(secret));
+        return request('GET', '/QuickConnect/Connect?secret=' + encodeURIComponent(secret), undefined, undefined, undefined, true);
     }
     async function qcAuthenticate(secret) {
-        var r = await request('POST', '/Users/AuthenticateWithQuickConnect', { Secret: secret });
-        setAuth(r);
+        var r = await request('POST', '/Users/AuthenticateWithQuickConnect', { Secret: secret }, undefined, undefined, true);
+        setAuth(r, pendingDeviceId);
+        pendingDeviceId = null;
         return r;
     }
-    function setAuth(r) {
-        state.token = r.AccessToken;
-        state.userId = r.User.Id;
-        state.userName = r.User.Name;
+    // Save the signed-in user as an account (replacing an older sign-in of the same user) and make it active.
+    function setAuth(r, deviceId) {
+        var acc = {
+            server: state.server, serverName: state.serverName, userId: r.User.Id, userName: r.User.Name,
+            token: r.AccessToken, deviceId: deviceId || state.deviceId, imageTag: r.User.PrimaryImageTag || null
+        };
+        var old = findAccount(acc.server, acc.userId);
+        if (old) state.accounts.splice(state.accounts.indexOf(old), 1);
+        state.accounts.push(acc);
+        switchTo(acc);
+    }
+
+    function removeAccount(acc) {
+        var i = state.accounts.indexOf(acc);
+        if (i >= 0) state.accounts.splice(i, 1);
+        if (isCurrent(acc)) { state.token = null; state.userId = null; state.userName = null; state.imageTag = null; }
         save();
     }
 
+    // Sign out the active user and forget the account. Other saved users are kept.
     async function logout() {
-        try { await request('POST', '/Sessions/Logout'); } catch (e) { /* ligegyldigt */ }
-        state.token = null; state.userId = null; state.userName = null;
-        save();
+        try { await request('POST', '/Sessions/Logout'); } catch (e) { /* doesn't matter */ }
+        var acc = findAccount(state.server, state.userId);
+        if (acc) removeAccount(acc);
+        else { state.token = null; state.userId = null; state.userName = null; save(); }
     }
 
     async function validateSession() {
         try { await request('GET', '/Users/Me', undefined, undefined, 8000); return true; } catch (e) {
-            if (e.status === 401) { state.token = null; save(); return false; }
+            if (e.status === 401) {
+                var acc = findAccount(state.server, state.userId);
+                if (acc) removeAccount(acc); else { state.token = null; save(); }
+                return false;
+            }
             throw e;
         }
     }
@@ -145,6 +211,15 @@ var Api = (function () {
     }
     function views() {
         return firstOk('GET', ['/UserViews?userId=' + state.userId, '/Users/' + state.userId + '/Views']);
+    }
+    // Latest additions in a library (returns a plain array; episodes are grouped per series)
+    function latest(parentId) {
+        var q = 'ParentId=' + parentId + '&Limit=16&' + FIELDS;
+        return firstOk('GET', ['/Items/Latest?userId=' + state.userId + '&' + q, '/Users/' + state.userId + '/Items/Latest?' + q]);
+    }
+    function favorites() {
+        var q = 'Filters=IsFavorite&Recursive=true&IncludeItemTypes=Movie,Series,Episode,Video,MusicVideo&SortBy=SortName&Limit=40&' + FIELDS;
+        return firstOk('GET', ['/Items?userId=' + state.userId + '&' + q, '/Users/' + state.userId + '/Items?' + q]);
     }
     // Sorting: key -> Jellyfin SortBy and default direction
     var SORTS = {
@@ -355,7 +430,8 @@ var Api = (function () {
     return {
         state: state, isTizen: isTizen, connect: connect, logout: logout, validateSession: validateSession,
         qcInitiate: qcInitiate, qcCheck: qcCheck, qcAuthenticate: qcAuthenticate,
-        resume: resume, nextUp: nextUp, views: views, children: children, item: item, imageUrls: imageUrls, bannerUrls: bannerUrls, chapterImageUrl: chapterImageUrl, backdropUrl: backdropUrl,
+        resume: resume, nextUp: nextUp, views: views, latest: latest, favorites: favorites, children: children,
+        switchTo: switchTo, removeAccount: removeAccount, isCurrent: isCurrent, userImageUrl: userImageUrl, item: item, imageUrls: imageUrls, bannerUrls: bannerUrls, chapterImageUrl: chapterImageUrl, backdropUrl: backdropUrl,
         setPlayed: setPlayed, setFavorite: setFavorite, search: search, nextEpisode: nextEpisode,
         subtitleUrl: subtitleUrl, savePrefs: savePrefs, SORTS: SORTS,
         playbackInfo: playbackInfo, report: report, stopEncoding: stopEncoding

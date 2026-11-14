@@ -151,10 +151,22 @@ var App = (function () {
             '</div></div>';
     }
 
+    // wide: true/false, or 'auto' to pick per item (posters for movies/series, thumbs for episodes)
     function row(title, items, wide, key) {
         if (!items.length) return '';
         return '<section class="row"><h2>' + esc(title) + '</h2><div class="row-items" data-scroll="x">' +
-            items.map(function (it) { return card(it, wide, key); }).join('') + '</div></section>';
+            items.map(function (it) { return card(it, wide === 'auto' ? isWide(it) : wide, key); }).join('') + '</div></section>';
+    }
+
+    // User picture, or a colored circle with the first letter
+    function avatar(acc, size) {
+        var url = Api.userImageUrl(acc);
+        var letter = esc(((acc.userName || '?').charAt(0) || '?').toUpperCase());
+        var h = 0;
+        for (var i = 0; i < (acc.userId || '').length; i++) h = (h * 31 + acc.userId.charCodeAt(i)) % 100000;
+        var hue = Math.round(h * 137.508) % 360;   // golden angle: similar IDs still get distinct colors
+        return '<span class="avatar ' + (size || '') + '" style="background:hsl(' + hue + ',55%,45%)">' + letter +
+            (url ? '<img src="' + esc(url) + '" onerror="this.parentNode.removeChild(this)" alt="">' : '') + '</span>';
     }
 
     // Common handling of a selected item (folder -> open, video -> info page).
@@ -358,29 +370,80 @@ var App = (function () {
                     var ct = v.CollectionType;
                     return !ct || ct === 'movies' || ct === 'tvshows' || ct === 'homevideos' || ct === 'musicvideos' || ct === 'boxsets' || ct === 'folders';
                 }));
+
+                // Second round: favorites + "Latest in <library>" (boxsets have no meaningful latest list)
+                var latestLibs = libs.filter(function (v) { return v.CollectionType !== 'boxsets'; });
+                var more = await Promise.all([Api.favorites().catch(function () { return { Items: [] }; })].concat(
+                    latestLibs.map(function (v) { return Api.latest(v.Id).catch(function () { return []; }); })));
+                var favs = keep((more[0] && more[0].Items) || []);
+
+                var acc = { userName: Api.state.userName, userId: Api.state.userId, server: Api.state.server, imageTag: Api.state.imageTag };
                 var html = '<div class="screen" data-scroll="y"><header class="topbar"><div class="logo">TvFin</div>' +
-                    '<div class="who">' + esc(Api.state.userName || '') + ' · ' + esc(Api.state.serverName || '') + '</div>' +
+                    '<div class="who">' + esc(Api.state.serverName || '') + '</div>' +
                     '<div class="btn small focusable" data-action="search" data-key="search">🔍 ' + esc(t('search')) + '</div>' +
                     '<div class="btn small focusable" data-action="lang" data-key="lang">🌐 ' + esc(I18n.name) + '</div>' +
-                    '<div class="btn small focusable" data-action="logout" data-key="logout">' + esc(t('logout')) + '</div></header>';
+                    '<div class="btn small focusable user-btn" data-action="users" data-key="users">' + avatar(acc, 'mini') + esc(Api.state.userName || '') + '</div></header>';
                 html += row(t('continue_watching'), resume, true, 'resume');
                 html += row(t('next_up'), next, true, 'next');
                 html += row(t('libraries'), libs, true, 'lib');
+                html += row(t('favorites'), favs, 'auto', 'fav');
+                latestLibs.forEach(function (v, i) {
+                    var list = more[i + 1];
+                    list = keep((list && list.Items) || list || []);
+                    html += row(t('latest_in', { name: v.Name }), list, 'auto', 'latest-' + v.Id);
+                });
                 if (!resume.length && !next.length && !libs.length) html += '<p class="muted pad">' + esc(t('no_libraries')) + '</p>';
                 return html + '</div>';
             },
             initialFocus: '.row .card',
             action: async function (a, el) {
-                if (a === 'logout') {
-                    await Api.logout();
-                    stack = [];
-                    go('login');
+                if (a === 'users') {
+                    go('users');
                 } else if (a === 'search') {
                     go('search', { q: '' });
                 } else if (a === 'lang') {
                     switchLanguage();
                 } else if (a === 'item') {
                     openItem(items[el.getAttribute('data-id')]);
+                }
+            }
+        };
+    };
+
+    // "Who's watching?": pick a saved user, add one with Quick Connect, or sign out
+    Screens.users = function () {
+        return {
+            initialFocus: '.user-card.current',
+            render: function () {
+                var accs = Api.state.accounts || [];
+                var html = '<div class="center-box users">' +
+                    '<div class="logo big">TvFin</div><h1>' + esc(t('whos_watching')) + '</h1><div class="user-row">' +
+                    accs.map(function (a, i) {
+                        return '<div class="user-card focusable' + (Api.isCurrent(a) ? ' current' : '') + '" data-action="pick" data-index="' + i + '" data-key="u-' + esc(a.userId) + '">' +
+                            avatar(a, 'big') + '<div class="user-name">' + esc(a.userName) + '</div>' +
+                            '<div class="user-server">' + esc(a.serverName || a.server) + '</div></div>';
+                    }).join('') +
+                    '<div class="user-card add focusable" data-action="add" data-key="add"><span class="avatar big add">+</span>' +
+                    '<div class="user-name">' + esc(t('add_user')) + '</div><div class="user-server">Quick Connect</div></div>' +
+                    '</div>';
+                if (Api.state.token) {
+                    html += '<div class="btn small focusable" data-action="logout" data-key="logout">' +
+                        esc(t('sign_out_user', { name: Api.state.userName || '' })) + '</div>';
+                }
+                return html + '</div>';
+            },
+            action: async function (a, el) {
+                var accs = Api.state.accounts || [];
+                if (a === 'pick') {
+                    Api.switchTo(accs[+el.getAttribute('data-index')]);
+                    stack = [];
+                    go('home');
+                } else if (a === 'add') {
+                    go(Api.state.server ? 'login' : 'server');
+                } else if (a === 'logout') {
+                    await Api.logout();
+                    stack = [];
+                    go(Api.state.accounts.length ? 'users' : 'login');
                 }
             }
         };
@@ -693,10 +756,12 @@ var App = (function () {
         registerTvKeys();
         I18n.detectTv(function () { if (stack.length && !Player.active) refresh(); });
         if (!Api.state.server) { go('server'); return; }
+        // Several saved users: ask who's watching
+        if ((Api.state.accounts || []).length > 1) { go('users'); return; }
         if (!Api.state.token) { go('login'); return; }
         try {
             var ok = await Api.validateSession();
-            go(ok ? 'home' : 'login');
+            go(ok ? 'home' : (Api.state.accounts.length ? 'users' : 'login'));
         } catch (e) {
             go('home');   // network error: home shows the error + "try again"
         }

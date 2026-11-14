@@ -4,6 +4,14 @@
 
 All changes to TvFin. Update the TV by running `./update.sh` on the server.
 
+## 1.4.0 – 2026-11-14
+
+### Added
+- **More rows on the home screen:** *Favorites* and *Latest in …* for each library (new episodes are grouped per series, like in Jellyfin).
+- **Several users on one TV:** the user button on the home screen opens *Who's watching?*, where you can switch user, add a new one with Quick Connect, or sign out just one of them. With more than one saved user, the app asks who's watching at startup.
+  - Each user gets their own device ID, so Jellyfin keeps their sessions and watch progress apart.
+  - Existing sign-ins are kept when updating.
+
 ## 1.3.1 – 2026-11-14
 
 ### Fixed

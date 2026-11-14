@@ -27,7 +27,9 @@ var I18n = (function () {
             sort_rating: 'Bedømmelse', sort_played: 'Sidst set', sort_random: 'Tilfældig',
             ascending: 'Stigende', descending: 'Faldende',
             view: 'Visning', view_auto: 'Automatisk', view_poster: 'Plakater', view_posterCard: 'Plakatkort',
-            view_thumb: 'Tommel', view_thumbCard: 'Tommel kort', view_banner: 'Banner', view_list: 'Liste'
+            view_thumb: 'Tommel', view_thumbCard: 'Tommel kort', view_banner: 'Banner', view_list: 'Liste',
+            favorites: 'Favoritter', latest_in: 'Senest tilføjet i {name}', whos_watching: 'Hvem ser med?',
+            add_user: 'Tilføj bruger', sign_out_user: 'Log {name} ud'
         },
         en: {
             _name: 'English',
@@ -55,7 +57,9 @@ var I18n = (function () {
             sort_rating: 'Rating', sort_played: 'Last played', sort_random: 'Random',
             ascending: 'Ascending', descending: 'Descending',
             view: 'View', view_auto: 'Automatic', view_poster: 'Posters', view_posterCard: 'Poster cards',
-            view_thumb: 'Thumbs', view_thumbCard: 'Thumb cards', view_banner: 'Banners', view_list: 'List'
+            view_thumb: 'Thumbs', view_thumbCard: 'Thumb cards', view_banner: 'Banners', view_list: 'List',
+            favorites: 'Favorites', latest_in: 'Latest in {name}', whos_watching: "Who's watching?",
+            add_user: 'Add user', sign_out_user: 'Sign out {name}'
         },
         de: {
             _name: 'Deutsch',
@@ -83,7 +87,9 @@ var I18n = (function () {
             sort_rating: 'Bewertung', sort_played: 'Zuletzt gesehen', sort_random: 'Zufällig',
             ascending: 'Aufsteigend', descending: 'Absteigend',
             view: 'Ansicht', view_auto: 'Automatisch', view_poster: 'Poster', view_posterCard: 'Posterkarten',
-            view_thumb: 'Vorschaubilder', view_thumbCard: 'Vorschaukarten', view_banner: 'Banner', view_list: 'Liste'
+            view_thumb: 'Vorschaubilder', view_thumbCard: 'Vorschaukarten', view_banner: 'Banner', view_list: 'Liste',
+            favorites: 'Favoriten', latest_in: 'Neu in {name}', whos_watching: 'Wer schaut?',
+            add_user: 'Benutzer hinzufügen', sign_out_user: '{name} abmelden'
         },
         sv: {
             _name: 'Svenska',
@@ -111,7 +117,9 @@ var I18n = (function () {
             sort_rating: 'Betyg', sort_played: 'Senast sedd', sort_random: 'Slumpvis',
             ascending: 'Stigande', descending: 'Fallande',
             view: 'Visning', view_auto: 'Automatisk', view_poster: 'Affischer', view_posterCard: 'Affischkort',
-            view_thumb: 'Miniatyrer', view_thumbCard: 'Miniatyrkort', view_banner: 'Banderoller', view_list: 'Lista'
+            view_thumb: 'Miniatyrer', view_thumbCard: 'Miniatyrkort', view_banner: 'Banderoller', view_list: 'Lista',
+            favorites: 'Favoriter', latest_in: 'Senast tillagt i {name}', whos_watching: 'Vem tittar?',
+            add_user: 'Lägg till användare', sign_out_user: 'Logga ut {name}'
         },
         nb: {
             _name: 'Norsk',
@@ -139,7 +147,9 @@ var I18n = (function () {
             sort_rating: 'Vurdering', sort_played: 'Sist sett', sort_random: 'Tilfeldig',
             ascending: 'Stigende', descending: 'Synkende',
             view: 'Visning', view_auto: 'Automatisk', view_poster: 'Plakater', view_posterCard: 'Plakatkort',
-            view_thumb: 'Miniatyrbilder', view_thumbCard: 'Miniatyrkort', view_banner: 'Bannere', view_list: 'Liste'
+            view_thumb: 'Miniatyrbilder', view_thumbCard: 'Miniatyrkort', view_banner: 'Bannere', view_list: 'Liste',
+            favorites: 'Favoritter', latest_in: 'Nylig lagt til i {name}', whos_watching: 'Hvem ser på?',
+            add_user: 'Legg til bruker', sign_out_user: 'Logg ut {name}'
         }
     };
     var order = ['da', 'en', 'de', 'sv', 'nb'];

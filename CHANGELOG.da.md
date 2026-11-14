@@ -4,6 +4,14 @@
 
 Alle ændringer i TvFin. Opdater TV'et med `./update.sh` på serveren.
 
+## 1.4.0 – 2026-11-14
+
+### Nyt
+- **Flere rækker på forsiden:** *Favoritter* og *Senest tilføjet i …* for hvert bibliotek (nye afsnit samles pr. serie, ligesom i Jellyfin).
+- **Flere brugere på samme TV:** brugerknappen på forsiden åbner *Hvem ser med?*, hvor du kan skifte bruger, tilføje en ny med Quick Connect eller logge kun én af dem ud. Er der mere end én gemt bruger, spørger appen ved opstart.
+  - Hver bruger får sit eget device-ID, så Jellyfin holder deres sessioner og fremskridt adskilt.
+  - Eksisterende login bevares ved opdatering.
+
 ## 1.3.1 – 2026-11-14
 
 ### Rettet
