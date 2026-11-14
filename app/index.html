@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>TvFin</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script>
+        // Samsung's TV-API'er findes kun på selve TV'et.
+        if (window.tizen) {
+            document.write('<script src="$WEBAPIS/webapis/webapis.js"><\/script>');
+        }
+    </script>
+</head>
+<body>
+    <script>
+        if (window.tizen) {
+            document.write('<object id="av-player" type="application/avplayer"></object>');
+        }
+    </script>
+    <video id="video" playsinline></video>
+
+    <div id="app"></div>
+
+    <div class="pu-spinner hidden" id="pu-spinner"></div>
+    <div id="player-ui" class="hidden">
+        <div class="pu-bottom">
+            <div class="pu-title" id="pu-title"></div>
+            <div class="pu-sub" id="pu-sub"></div>
+            <div class="pu-bar"><div class="pu-fill" id="pu-fill"></div><div class="pu-seek" id="pu-seek"></div></div>
+            <div class="pu-times">
+                <span id="pu-state"></span>
+                <span id="pu-time">0:00</span>
+                <span class="pu-sep">/</span>
+                <span id="pu-dur">0:00</span>
+                <span class="pu-hint">◀ ▶ spol 10 sek &nbsp;·&nbsp; OK pause &nbsp;·&nbsp; Tilbage stop</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="hidden"></div>
+
+    <script src="js/api.js"></script>
+    <script src="js/nav.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

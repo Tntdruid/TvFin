@@ -1,0 +1,241 @@
+/* Designet til 1920x1080. Undgår flex "gap" og CSS grid for ældre Tizen-browsere. */
+:root {
+    --bg: #0f1016;
+    --bg2: #1a1c26;
+    --card: #23263a;
+    --text: #f2f3f7;
+    --muted: #9aa0b4;
+    --accent: #7b5cff;
+    --accent2: #00a4dc;
+    --focus: #ffffff;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    color: var(--text);
+    font-family: "SamsungOne", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 26px;
+}
+
+body { background: var(--bg); }
+body.playing { background: transparent; }
+body.playing #app { display: none; }
+
+#av-player, #video {
+    position: fixed;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    background: #000;
+}
+#video { display: none; object-fit: contain; }
+body:not(.playing) #av-player { display: none; }
+
+#app { position: fixed; left: 0; top: 0; right: 0; bottom: 0; }
+
+.hidden { display: none !important; }
+.muted { color: var(--muted); }
+.small { font-size: 22px; }
+.pad { padding: 0 80px; }
+.error { color: #ff7b8a; min-height: 34px; }
+
+.loading {
+    position: absolute; left: 0; right: 0; top: 45%;
+    text-align: center; color: var(--muted); font-size: 32px;
+}
+
+/* ---------- Logo / topbar ---------- */
+.logo {
+    font-weight: 800;
+    font-size: 40px;
+    letter-spacing: 1px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+.logo.big { font-size: 72px; margin-bottom: 20px; }
+
+.screen {
+    position: absolute; left: 0; top: 0; right: 0; bottom: 0;
+    overflow: hidden;
+    padding-bottom: 80px;
+}
+
+.topbar {
+    display: flex;
+    align-items: center;
+    padding: 40px 80px 10px;
+}
+.topbar .who { flex: 1; margin-left: 30px; color: var(--muted); font-size: 28px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------- Knapper / input ---------- */
+.btn {
+    display: inline-block;
+    padding: 18px 44px;
+    margin: 12px 10px;
+    border-radius: 12px;
+    background: var(--card);
+    font-size: 28px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform .12s, background .12s;
+    border: 3px solid transparent;
+}
+.btn.small { padding: 10px 28px; font-size: 24px; margin: 0; }
+.btn.primary { background: var(--accent); }
+.btn.focused { background: var(--focus); color: #111; transform: scale(1.06); }
+
+.input {
+    display: block;
+    width: 760px;
+    margin: 30px auto 10px;
+    padding: 22px 28px;
+    font-size: 34px;
+    border-radius: 12px;
+    border: 3px solid #3a3e58;
+    background: var(--bg2);
+    color: var(--text);
+    outline: none;
+    text-align: center;
+}
+.input.focused { border-color: var(--focus); }
+
+.center-box {
+    position: absolute; left: 50%; top: 50%;
+    width: 1200px;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+.center-box h1 { font-size: 46px; margin: 10px 0 18px; }
+.center-box p { font-size: 28px; line-height: 1.45; }
+.btn-row { margin-top: 20px; }
+
+.qc-code {
+    font-size: 120px;
+    font-weight: 800;
+    letter-spacing: 24px;
+    margin: 30px 0 10px;
+    font-family: Consolas, "Courier New", monospace;
+    color: #fff;
+}
+
+/* ---------- Rækker og kort ---------- */
+.row { margin-top: 26px; }
+.row h2 { font-size: 32px; margin: 0 80px 14px; font-weight: 600; }
+.row-items {
+    white-space: nowrap;
+    overflow: hidden;
+    padding: 14px 70px 20px;
+    scroll-behavior: smooth;
+}
+
+.card {
+    display: inline-block;
+    vertical-align: top;
+    width: 240px;
+    margin: 0 10px 24px;
+    white-space: normal;
+    cursor: pointer;
+    transition: transform .15s;
+}
+.card.wide { width: 420px; }
+.card .poster {
+    position: relative;
+    width: 100%;
+    padding-top: 150%;
+    border-radius: 12px;
+    background: var(--card) center / cover no-repeat;
+    overflow: hidden;
+    border: 4px solid transparent;
+}
+.card.wide .poster { padding-top: 56.25%; }
+.card.focused { transform: scale(1.07); }
+.card.focused .poster { border-color: var(--focus); box-shadow: 0 10px 40px rgba(0,0,0,.6); }
+.poster-fallback {
+    position: absolute; left: 12px; right: 12px; top: 50%;
+    transform: translateY(-50%);
+    text-align: center; font-size: 24px; color: var(--muted);
+}
+.card-title {
+    margin-top: 10px; font-size: 24px; font-weight: 600;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.card-sub { font-size: 21px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.progress {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    height: 8px; background: rgba(0,0,0,.55);
+}
+.progress i { display: block; height: 100%; background: var(--accent2); }
+.badge {
+    position: absolute; right: 10px; top: 10px;
+    width: 40px; height: 40px; line-height: 40px; border-radius: 20px;
+    text-align: center; background: var(--accent); font-size: 24px; font-weight: 700;
+}
+
+.grid { padding: 20px 70px; }
+.overview { margin: 10px 80px 0; max-width: 1400px; color: var(--muted); font-size: 24px; line-height: 1.4; max-height: 136px; overflow: hidden; }
+
+/* ---------- Dialog ---------- */
+.dialog-backdrop {
+    position: fixed; left: 0; top: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,.7);
+    z-index: 50;
+}
+.dialog {
+    position: absolute; left: 50%; top: 50%;
+    transform: translate(-50%, -50%);
+    width: 900px;
+    padding: 40px;
+    border-radius: 18px;
+    background: var(--bg2);
+    text-align: center;
+}
+.dialog h2 { margin: 0 0 24px; font-size: 34px; }
+.dialog .btn { display: block; margin: 16px 60px; }
+
+/* ---------- Afspiller ---------- */
+#player-ui {
+    position: fixed; left: 0; top: 0; right: 0; bottom: 0;
+    z-index: 40;
+    background: linear-gradient(to top, rgba(0,0,0,.85) 0%, rgba(0,0,0,0) 40%);
+}
+.pu-bottom { position: absolute; left: 80px; right: 80px; bottom: 60px; }
+.pu-title { font-size: 44px; font-weight: 700; }
+.pu-sub { font-size: 28px; color: #cfd2de; margin: 6px 0 24px; min-height: 30px; }
+.pu-bar { position: relative; height: 10px; background: rgba(255,255,255,.25); border-radius: 5px; }
+.pu-fill { height: 100%; width: 0; background: var(--accent2); border-radius: 5px; }
+.pu-seek {
+    position: absolute; top: -10px; width: 6px; height: 30px; margin-left: -3px;
+    background: #fff; border-radius: 3px; display: none;
+}
+.pu-times { margin-top: 18px; font-size: 28px; }
+.pu-times #pu-state { display: inline-block; width: 50px; }
+.pu-sep { color: var(--muted); margin: 0 6px; }
+.pu-hint { float: right; color: var(--muted); font-size: 22px; margin-top: 4px; }
+
+.pu-spinner {
+    position: fixed; left: 50%; top: 50%; z-index: 45;
+    width: 90px; height: 90px; margin: -45px 0 0 -45px;
+    border: 8px solid rgba(255,255,255,.2);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+#toast {
+    position: fixed; left: 50%; bottom: 60px;
+    transform: translateX(-50%);
+    max-width: 1400px;
+    padding: 20px 36px;
+    border-radius: 12px;
+    background: #2b2f45;
+    font-size: 26px;
+    z-index: 100;
+    box-shadow: 0 8px 30px rgba(0,0,0,.5);
+}
