@@ -156,6 +156,11 @@ body:not(.playing) #av-player { display: none; }
 .card.wide .poster { padding-top: 56.25%; }
 .card.focused { transform: scale(1.07); }
 .card.focused .poster { border-color: var(--focus); box-shadow: 0 10px 40px rgba(0,0,0,.6); }
+.poster-img {
+    position: absolute; left: 0; top: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+}
 .poster-fallback {
     position: absolute; left: 12px; right: 12px; top: 50%;
     transform: translateY(-50%);

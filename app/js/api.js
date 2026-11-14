@@ -156,24 +156,41 @@ var Api = (function () {
         return firstOk('GET', ['/Items/' + id + '?userId=' + state.userId, '/Users/' + state.userId + '/Items/' + id]);
     }
 
-    function imageUrl(it, wide, height) {
-        var id = null, type = 'Primary', tag = null;
+    // Returnerer en prioriteret liste af billed-URL'er. Appen prøver dem i rækkefølge (onerror -> næste),
+    // så kort får et billede selv hvis serveren ikke sender ImageTags med.
+    function imageUrls(it, wide, height) {
         var tags = it.ImageTags || {};
+        var backs = it.BackdropImageTags || [];
+        var parentBacks = it.ParentBackdropImageTags || [];
+        var c = [];
+        function add(id, type, tag) { if (id) c.push([id, type, tag]); }
+
         if (wide) {
-            if (it.Type === 'Episode' && tags.Primary) { id = it.Id; tag = tags.Primary; }
-            else if (tags.Thumb) { id = it.Id; type = 'Thumb'; tag = tags.Thumb; }
-            else if (it.ParentThumbItemId) { id = it.ParentThumbItemId; type = 'Thumb'; tag = it.ParentThumbImageTag; }
-            else if (it.BackdropImageTags && it.BackdropImageTags.length) { id = it.Id; type = 'Backdrop'; tag = it.BackdropImageTags[0]; }
-            else if (it.ParentBackdropItemId && it.ParentBackdropImageTags && it.ParentBackdropImageTags.length) {
-                id = it.ParentBackdropItemId; type = 'Backdrop'; tag = it.ParentBackdropImageTags[0];
-            }
+            if (it.Type === 'Episode') add(it.Id, 'Primary', tags.Primary);
+            if (tags.Thumb) add(it.Id, 'Thumb', tags.Thumb);
+            if (it.ParentThumbItemId) add(it.ParentThumbItemId, 'Thumb', it.ParentThumbImageTag);
+            if (backs.length) add(it.Id, 'Backdrop', backs[0]);
+            if (it.ParentBackdropItemId && parentBacks.length) add(it.ParentBackdropItemId, 'Backdrop', parentBacks[0]);
+            if (tags.Primary) add(it.Id, 'Primary', tags.Primary);
+            // Gæt uden tags (bruges kun hvis de foregående fejler)
+            add(it.Id, 'Thumb'); add(it.Id, 'Backdrop'); add(it.Id, 'Primary');
+            if (it.SeriesId) { add(it.SeriesId, 'Thumb'); add(it.SeriesId, 'Backdrop'); }
+        } else {
+            if (tags.Primary) add(it.Id, 'Primary', tags.Primary);
+            if (it.SeriesId && it.SeriesPrimaryImageTag) add(it.SeriesId, 'Primary', it.SeriesPrimaryImageTag);
+            add(it.Id, 'Primary');
+            if (it.SeriesId) add(it.SeriesId, 'Primary');
         }
-        if (!id) {
-            if (tags.Primary) { id = it.Id; tag = tags.Primary; }
-            else if (it.SeriesId && it.SeriesPrimaryImageTag) { id = it.SeriesId; tag = it.SeriesPrimaryImageTag; }
-            else return null;
-        }
-        return state.server + '/Items/' + id + '/Images/' + type + '?fillHeight=' + (height || 360) + '&quality=85' + (tag ? '&tag=' + tag : '');
+
+        var seen = {}, out = [];
+        c.forEach(function (x) {
+            var k = x[0] + '/' + x[1];
+            if (seen[k]) return;
+            seen[k] = true;
+            out.push(state.server + '/Items/' + x[0] + '/Images/' + x[1] + '?fillHeight=' + (height || 360) +
+                '&quality=85' + (x[2] ? '&tag=' + x[2] : '') + '&api_key=' + state.token);
+        });
+        return out;
     }
 
     // ---- Afspilning ----
@@ -248,7 +265,7 @@ var Api = (function () {
     return {
         state: state, isTizen: isTizen, connect: connect, logout: logout, validateSession: validateSession,
         qcInitiate: qcInitiate, qcCheck: qcCheck, qcAuthenticate: qcAuthenticate,
-        resume: resume, nextUp: nextUp, views: views, children: children, item: item, imageUrl: imageUrl,
+        resume: resume, nextUp: nextUp, views: views, children: children, item: item, imageUrls: imageUrls,
         playbackInfo: playbackInfo, report: report, stopEncoding: stopEncoding
     };
 })();

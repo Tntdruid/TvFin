@@ -90,7 +90,7 @@ var App = (function () {
     function isWide(it) { return it.Type === 'Episode' || it.Type === 'Video' || it.Type === 'CollectionFolder' || it.Type === 'UserView'; }
 
     function card(it, wide, keyPrefix) {
-        var img = Api.imageUrl(it, wide, wide ? 300 : 420);
+        var urls = Api.imageUrls(it, wide, wide ? 300 : 420);
         var ud = it.UserData || {};
         var pct = ud.PlayedPercentage || 0;
         var title = it.Name, sub = '';
@@ -102,8 +102,9 @@ var App = (function () {
             sub = String(it.ProductionYear);
         }
         return '<div class="card focusable' + (wide ? ' wide' : '') + '" data-key="' + keyPrefix + '-' + it.Id + '" data-id="' + it.Id + '" data-action="item">' +
-            '<div class="poster"' + (img ? ' style="background-image:url(\'' + img + '\')"' : '') + '>' +
-            (img ? '' : '<span class="poster-fallback">' + esc(it.Name) + '</span>') +
+            '<div class="poster"><span class="poster-fallback">' + esc(it.Name) + '</span>' +
+            (urls.length ? '<img class="poster-img" src="' + esc(urls[0]) + '" data-alt="' + esc(urls.slice(1).join('|')) +
+                '" onerror="App.imgErr(this)" alt="">' : '') +
             (ud.Played ? '<span class="badge">✓</span>' : '') +
             (pct > 0 && pct < 100 ? '<div class="progress"><i style="width:' + pct + '%"></i></div>' : '') +
             '</div><div class="card-title">' + esc(title) + '</div>' +
@@ -371,5 +372,17 @@ var App = (function () {
 
     init();
 
-    return { toast: toast, go: go, back: back };
+    // Billede fejlede: prøv næste URL, eller fjern billedet så navnet ses.
+    function imgErr(img) {
+        var rest = img.getAttribute('data-alt');
+        if (rest) {
+            var list = rest.split('|');
+            img.setAttribute('data-alt', list.slice(1).join('|'));
+            img.src = list[0];
+        } else if (img.parentNode) {
+            img.parentNode.removeChild(img);
+        }
+    }
+
+    return { toast: toast, go: go, back: back, imgErr: imgErr };
 })();
