@@ -63,12 +63,14 @@ Open http://localhost:8080 – arrow keys, Enter and Backspace/Esc work like the
 - `scripts/tizen-install.sh` – runs inside the container: packages and installs
 - `scripts/make-icon.js` – generates `app/icon.png`
 
-## More Jellyfin projects
+<!-- jellyfin-projects:start -->
+## More Jellyfin projects / Flere Jellyfin-projekter
 
-| Project | What it does |
-|---|---|
-| [tonefin](https://github.com/Tntdruid/tonefin) | A small Windows music player for Jellyfin that always reports playback to the server |
-| [jellyfin-plugin-episode-title-fixer](https://github.com/Tntdruid/jellyfin-plugin-episode-title-fixer) | Jellyfin plugin that replaces placeholder episode titles like "Episode 11" with the original title |
-| [jellyfin-plugin-auto-artist-playlists](https://github.com/Tntdruid/jellyfin-plugin-auto-artist-playlists) | Jellyfin plugin that hearts songs you listen to and adds them to a private playlist per artist |
-| [jellyfin-video-stats](https://github.com/Tntdruid/jellyfin-video-stats) | Home Assistant add-on: viewing stats for movies, series and YouTube videos in Jellyfin |
-| [jellyfin-music-stats](https://github.com/Tntdruid/jellyfin-music-stats) | Home Assistant add-on: music listening stats for Jellyfin |
+| | 🇬🇧 | 🇩🇰 |
+|---|---|---|
+| [Jellyfin Music Stats](https://github.com/Tntdruid/jellyfin-music-stats) | Home Assistant add-on with music listening stats: top lists, genres, moods, Wrapped | Home Assistant-add-on med lyttestatistik for musik: top-lister, genrer, humør, Wrapped |
+| [Jellyfin Video Stats](https://github.com/Tntdruid/jellyfin-video-stats) | Home Assistant add-on with viewing stats for movies, series and YouTube videos: progress, binges, transcoding, Wrapped | Home Assistant-add-on med seerstatistik for film, serier og YouTube-videoer: fremdrift, binge, transcoding, Wrapped |
+| [Auto Artist Playlists](https://github.com/Tntdruid/jellyfin-plugin-auto-artist-playlists) | Jellyfin plugin that hearts the songs you listen to and adds them to a playlist per artist | Jellyfin-plugin, der giver hjerte til de sange, du hører, og samler dem i en playliste pr. kunstner |
+| [Episode Title Fixer](https://github.com/Tntdruid/jellyfin-plugin-episode-title-fixer) | Jellyfin plugin that replaces placeholder episode titles like "Episode 11" with the original title | Jellyfin-plugin, der erstatter pladsholdere som "Afsnit 11" med afsnittets originale titel |
+| [Tonefin](https://github.com/Tntdruid/tonefin) | Windows music player for Jellyfin that always reports what you play, so stats and plugins see every listen | Musikafspiller til Windows til Jellyfin, der altid rapporterer, hvad du spiller, så statistik og plugins ser hver lytning |
+<!-- jellyfin-projects:end -->
