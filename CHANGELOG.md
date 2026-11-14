@@ -1,57 +1,59 @@
+**English** | [Dansk](CHANGELOG.da.md)
+
 # Changelog
 
-Alle ændringer i TvFin. Opdater TV'et med `./update.sh` på serveren.
+All changes to TvFin. Update the TV by running `./update.sh` on the server.
 
 ## 1.3.0 – 2026-11-14
 
-### Nyt
-- **Visninger i mapper** (som i Jellyfin): knappen *▦ Visning* skifter mellem
-  *Automatisk*, *Plakater*, *Plakatkort*, *Tommel*, *Tommel kort*, *Banner* og *Liste*.
-  Valget huskes pr. mappe – også inde i serier og sæsoner.
-  - *Liste* viser et lille billede med titel, år, spilletid, bedømmelse og en kort beskrivelse.
-  - *Banner* bruger Jellyfins banner-billeder og falder tilbage til tommel/baggrund.
+### Added
+- **View modes in folders** (like Jellyfin web): the *▦ View* button cycles through
+  *Automatic*, *Posters*, *Poster cards*, *Thumbs*, *Thumb cards*, *Banners* and *List*.
+  The choice is remembered per folder – including inside series and seasons.
+  - *List* shows a small image with title, year, runtime, rating and a short overview.
+  - *Banners* uses Jellyfin's banner images and falls back to thumb/backdrop.
 
-### Rettet
-- Sprogknappen på server- og loginskærmen står nu på sin egen linje, så ned-pil fra feltet går til *Forbind*.
+### Fixed
+- The language button on the server and sign-in screens is now on its own line, so pressing down from the input goes to *Connect*.
 
 ## 1.2.1 – 2026-11-14
 
-### Rettet
-- **Større thumbnails:** kort er nu 560 px brede (før 420), plakater 300 px (før 240), med større tekst og skarpere billeder.
-- Hvis TV'et rapporterer en skærm større end 1920 px (fx 4K), skaleres hele appen op, så intet bliver småt.
+### Fixed
+- **Bigger thumbnails:** cards are now 560 px wide (was 420), posters 300 px (was 240), with larger text and sharper images.
+- If the TV reports a screen wider than 1920 px (e.g. 4K), the whole app is scaled up so nothing looks tiny.
 
 ## 1.2.0 – 2026-11-14
 
-### Nyt
-- **Flere sprog i appen:** dansk, engelsk, tysk, svensk og norsk. Følger TV'ets sprog automatisk og kan skiftes med 🌐-knappen på forsiden.
-- **Lyd og undertekster:** tryk **▲** under afspilning for at vælge lydspor og undertekster. Dit valg af sprog huskes til næste gang.
-  - Tekst-undertekster (SRT, ASS, VTT …) vises af appen selv, så der ikke skal omkodes.
-  - Billed-undertekster (PGS/DVD) brændes ind af serveren.
-- **Næste afsnit automatisk:** når et afsnit slutter, vises "Næste afsnit – starter om 10 sek" med *Afspil nu* og *Annuller*.
-- **Søgning:** 🔍-knap på forsiden; søg i film, serier, afsnit og videoer.
-- **Sortering i mapper:** navn, dato tilføjet, udgivelsesdato, bedømmelse, sidst set eller tilfældig, stigende eller faldende. Valget huskes pr. mappe.
+### Added
+- **UI languages:** Danish, English, German, Swedish and Norwegian. Follows the TV's language automatically and can be switched with the 🌐 button on the home screen.
+- **Audio and subtitles:** press **▲** during playback to choose audio track and subtitles. Your language choice is remembered.
+  - Text subtitles (SRT, ASS, VTT …) are rendered by the app, so no transcoding is needed.
+  - Image subtitles (PGS/DVD) are burned in by the server.
+- **Auto-play next episode:** when an episode ends, "Next episode – starts in 10 sec" is shown with *Play now* and *Cancel*.
+- **Search:** 🔍 button on the home screen; searches movies, series, episodes and videos.
+- **Sorting in folders:** name, date added, release date, rating, last played or random, ascending or descending. Remembered per folder.
 
-### Rettet
-- Venstre/højre-navigation kunne springe over knapper, der lå tæt op ad hinanden.
-- Ned-pil fra et felt går nu til det element, der står længst til venstre, i stedet for et tilfældigt.
+### Fixed
+- Left/right navigation could skip buttons placed close together.
+- Pressing down from an input now goes to the left-most element instead of an arbitrary one.
 
 ## 1.1.0 – 2026-11-14
 
-### Nyt
-- **Infoside** når man vælger en video: billede, år, spilletid, "slutter kl.", video- og lydinfo, beskrivelse, studie og genre.
-- Knapper til **Afspil / Fortsæt**, **Start forfra**, **Marker som set** og **Favorit**.
-- **Scener:** kapitelbilleder; vælg et kapitel for at starte derfra.
+### Added
+- **Info page** when selecting a video: image, year, runtime, "ends at", video and audio info, overview, studio and genre.
+- Buttons for **Play / Resume**, **Start over**, **Mark as played** and **Favorite**.
+- **Scenes:** chapter images; pick a chapter to start from there.
 
 ## 1.0.1 – 2026-11-14
 
-### Rettet
-- Thumbnails blev ikke vist, når serveren ikke sendte billed-tags med. Appen prøver nu flere billedtyper efter tur.
+### Fixed
+- Thumbnails were not shown when the server didn't send image tags. The app now tries several image types in turn.
 
 ## 1.0.0 – 2026-11-14
 
-Første version.
-- Login med **Quick Connect**.
-- Forside med *Fortsæt med at se*, *Næste afsnit* og biblioteker.
-- Afspilning med Samsungs AVPlay (direkte afspilning eller HLS-omkodning fra serveren).
-- **Husker hvor du er nået til:** positionen gemmes på Jellyfin-serveren.
-- Installation via Docker (samme container som georift/install-jellyfin-tizen) og `update.sh` fra GitHub.
+First release.
+- Sign in with **Quick Connect**.
+- Home screen with *Continue watching*, *Next up* and libraries.
+- Playback with Samsung's AVPlay (direct play or HLS transcoding from the server).
+- **Remembers where you left off:** the position is stored on the Jellyfin server.
+- Install via Docker (same container as georift/install-jellyfin-tizen) and `update.sh` from GitHub.

@@ -1,32 +1,34 @@
-# TvFin – minimal Jellyfin-afspiller til Samsung TV (Tizen)
+**English** | [Dansk](README.da.md)
 
-- **Quick Connect**-login (ingen tastatur nødvendigt)
-- **Fortsæt med at se** / **Næste afsnit** / biblioteker
-- Afspiller med Samsungs AVPlay (direkte afspilning af mkv/mp4/HEVC m.m., ellers omkoder serveren til HLS)
-- Infoside med kapitler, lyd/undertekst-valg, automatisk næste afsnit, søgning, sortering og 5 sprog – se [CHANGELOG.md](CHANGELOG.md)
-- **Husker hvor du er nået til** – positionen gemmes på Jellyfin-serveren (hvert 10. sek, ved pause, spol og stop), så den også passer med telefonen osv.
+# TvFin – a minimal Jellyfin player for Samsung TVs (Tizen)
 
-## Installation fra en Linux-server (via GitHub)
+- **Quick Connect** sign-in (no typing a password on the remote)
+- **Continue watching** / **Next up** / libraries
+- Playback through Samsung's AVPlay (direct play of mkv/mp4/HEVC etc., otherwise the server transcodes to HLS)
+- Info page with chapters, audio/subtitle selection, auto-play next episode, search, sorting, view modes and 5 UI languages – see [CHANGELOG.md](CHANGELOG.md)
+- **Remembers where you left off** – the position is stored on the Jellyfin server (every 10 s, and on pause, seek and stop), so it stays in sync with your phone and other clients.
 
-Serveren skal have Docker og git, og dens IP skal stå som Developer-IP på TV'et.
+## Install from a Linux server (via GitHub)
+
+The server needs Docker and git, and its IP must be set as the Developer IP on the TV.
 
 ```bash
 git clone https://github.com/Tntdruid/TvFin.git
 cd TvFin
-./update.sh 192.168.1.50      # TV'ets IP – huskes til næste gang
+./update.sh 192.168.1.50      # the TV's IP – remembered for next time
 ```
 
-Opdater senere med bare `./update.sh` (henter nyeste kode fra GitHub og geninstallerer).
+Update later with just `./update.sh` (pulls the latest code from GitHub and reinstalls).
 
-## Installation på TV'et fra Windows
+## Install from Windows
 
-Kræver **Docker Desktop** på PC'en. Det bruger samme container som
-[georift/install-jellyfin-tizen](https://github.com/Georift/install-jellyfin-tizen), bare med vores egen app.
+Requires **Docker Desktop** on the PC. It uses the same container as
+[georift/install-jellyfin-tizen](https://github.com/Georift/install-jellyfin-tizen), just with this app.
 
-1. **Developer Mode på TV'et:** Apps → tast `12345` (tryk "123" eller hold Home nede for tastatur) →
-   slå *Developer mode* til → indtast PC'ens IP-adresse → genstart TV'et.
-2. Find TV'ets IP (Indstillinger → Generelt → Netværk → Netværksstatus → IP-indstillinger).
-3. Kør i denne mappe:
+1. **Developer Mode on the TV:** Apps → type `12345` (press "123" or hold Home for the keypad) →
+   turn *Developer mode* on → enter the PC's IP address → restart the TV.
+2. Find the TV's IP (Settings → General → Network → Network Status → IP Settings).
+3. Run in this folder:
 
 ```powershell
 .\install.ps1 192.168.1.50
@@ -34,28 +36,29 @@ Kræver **Docker Desktop** på PC'en. Det bruger samme container som
 
 (macOS/Linux: `./install.sh 192.168.1.50`)
 
-Første gang trækkes Docker-imaget (~1–2 GB). Den færdige pakke lægges også i `dist/TvFin.wgt`.
-Opdatering = kør scriptet igen.
+The first run pulls the Docker image (~1–2 GB). The packaged app is also written to `dist/TvFin.wgt`.
+To update, run the script again.
 
-## Fjernbetjening
+## Remote control
 
-| Tast | Menu | Afspiller |
+| Key | Menus | Player |
 |---|---|---|
-| Pile | Flyt fokus | ◀ ▶ spol 10 sek, ▲ lyd og undertekster |
-| OK | Vælg | Pause/afspil |
-| Tilbage | Tilbage / afslut | Stop (gemmer position) |
-| ⏪ ⏩ | | Spol 30 sek |
+| Arrows | Move focus | ◀ ▶ seek 10 s, ▲ audio & subtitles |
+| OK | Select | Pause/play |
+| Back | Back / exit | Stop (saves position) |
+| ⏪ ⏩ | | Seek 30 s |
 
-## Test i browser
+## Testing in a browser
 
 ```powershell
 node scripts/serve.js
 ```
 
-Åbn http://localhost:8080 – piletaster, Enter og Backspace/Esc virker som fjernbetjeningen.
+Open http://localhost:8080 – arrow keys, Enter and Backspace/Esc work like the remote.
 
-## Filer
+## Files
 
-- `app/` – selve Tizen-appen (`config.xml`, `index.html`, `js/`, `css/`)
-- `scripts/tizen-install.sh` – kører i containeren: pakker og installerer
-- `scripts/make-icon.js` – genererer `app/icon.png`
+- `app/` – the Tizen app itself (`config.xml`, `index.html`, `js/`, `css/`)
+- `app/js/i18n.js` – UI translations (da, en, de, sv, nb)
+- `scripts/tizen-install.sh` – runs inside the container: packages and installs
+- `scripts/make-icon.js` – generates `app/icon.png`
