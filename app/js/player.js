@@ -451,6 +451,7 @@ var Player = (function () {
     function openMenu() {
         if (!session || !session.started) return;
         menuOpen = true;
+        document.body.classList.add('menu-open');
         var audios = streamsOf('Audio', session.info.streams);
         var subs = streamsOf('Subtitle', session.info.streams);
         var html = '<div class="tm-col" data-scroll="y"><h3>' + esc(t('audio')) + '</h3>' +
@@ -472,6 +473,7 @@ var Player = (function () {
     function closeMenu() {
         if (!menuOpen) return;
         menuOpen = false;
+        document.body.classList.remove('menu-open');
         el.menu.classList.add('hidden');
         el.menu.innerHTML = '';
         Nav.setScope(document.getElementById('app'));

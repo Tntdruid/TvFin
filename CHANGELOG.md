@@ -4,6 +4,15 @@
 
 All changes to TvFin. Update the TV by running `./update.sh` on the server.
 
+## 1.3.1 – 2026-11-14
+
+### Fixed
+- Subtitles are hidden while the audio/subtitle menu is open, so they no longer show through it.
+
+### Docs
+- Screenshots in the README.
+- Links to the other Jellyfin projects.
+
 ## 1.3.0 – 2026-11-14
 
 ### Added

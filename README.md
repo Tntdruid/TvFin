@@ -8,6 +8,19 @@
 - Info page with chapters, audio/subtitle selection, auto-play next episode, search, sorting, view modes and 5 UI languages – see [CHANGELOG.md](CHANGELOG.md)
 - **Remembers where you left off** – the position is stored on the Jellyfin server (every 10 s, and on pause, seek and stop), so it stays in sync with your phone and other clients.
 
+## Screenshots
+
+![Home screen](docs/screenshots/home.png)
+
+| | |
+|---|---|
+| ![Info page](docs/screenshots/detail.png) | ![Chapters](docs/screenshots/chapters.png) |
+| ![Player with subtitles](docs/screenshots/player.png) | ![Audio and subtitle menu](docs/screenshots/tracks.png) |
+| ![Library (posters)](docs/screenshots/library.png) | ![List view](docs/screenshots/list.png) |
+| ![Search](docs/screenshots/search.png) | ![Quick Connect sign-in](docs/screenshots/login.png) |
+
+_Demo content with made-up titles and generated artwork._
+
 ## Install from a Linux server (via GitHub)
 
 The server needs Docker and git, and its IP must be set as the Developer IP on the TV.

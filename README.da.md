@@ -8,6 +8,19 @@
 - Infoside med kapitler, lyd/undertekst-valg, automatisk næste afsnit, søgning, sortering, visninger og 5 sprog – se [CHANGELOG.da.md](CHANGELOG.da.md)
 - **Husker hvor du er nået til** – positionen gemmes på Jellyfin-serveren (hvert 10. sek, ved pause, spol og stop), så den også passer med telefonen osv.
 
+## Skærmbilleder
+
+![Forside](docs/screenshots/home.png)
+
+| | |
+|---|---|
+| ![Infoside](docs/screenshots/detail.png) | ![Kapitler](docs/screenshots/chapters.png) |
+| ![Afspiller med undertekster](docs/screenshots/player.png) | ![Menu til lyd og undertekster](docs/screenshots/tracks.png) |
+| ![Bibliotek (plakater)](docs/screenshots/library.png) | ![Listevisning](docs/screenshots/list.png) |
+| ![Søgning](docs/screenshots/search.png) | ![Login med Quick Connect](docs/screenshots/login.png) |
+
+_Demo-indhold med opdigtede titler og genereret grafik._
+
 ## Installation fra en Linux-server (via GitHub)
 
 Serveren skal have Docker og git, og dens IP skal stå som Developer-IP på TV'et.

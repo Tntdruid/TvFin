@@ -4,6 +4,15 @@
 
 Alle ændringer i TvFin. Opdater TV'et med `./update.sh` på serveren.
 
+## 1.3.1 – 2026-11-14
+
+### Rettet
+- Undertekster skjules, mens menuen til lyd og undertekster er åben, så de ikke skinner igennem.
+
+### Dokumentation
+- Skærmbilleder i README.
+- Links til de andre Jellyfin-projekter.
+
 ## 1.3.0 – 2026-11-14
 
 ### Nyt
