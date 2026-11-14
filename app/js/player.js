@@ -11,6 +11,9 @@ var Player = (function () {
             try { av.stop(); av.close(); } catch (e) { /* nothing active */ }
             av.open(url);
             av.setDisplayRect(0, 0, 1920, 1080);
+            // AVPlay stretches to full screen by default; keep the video's own aspect ratio
+            // (4:3 gets black bars instead of being stretched to 16:9).
+            try { av.setDisplayMethod('PLAYER_DISPLAY_MODE_LETTER_BOX'); } catch (e) { /* not supported */ }
             try {
                 if (webapis.productinfo && webapis.productinfo.isUdPanelSupported()) av.setStreamingProperty('SET_MODE_4K', 'TRUE');
             } catch (e) { /* not supported */ }

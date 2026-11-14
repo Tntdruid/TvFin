@@ -4,6 +4,11 @@
 
 Alle ændringer i TvFin. Opdater TV'et med `./update.sh` på serveren.
 
+## 1.4.1 – 2026-11-14
+
+### Rettet
+- 4:3-videoer blev strakt ud til 16:9 på TV'et. Afspilleren bevarer nu videoens billedformat (sorte kanter i siderne).
+
 ## 1.4.0 – 2026-11-14
 
 ### Nyt

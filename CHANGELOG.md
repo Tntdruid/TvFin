@@ -4,6 +4,11 @@
 
 All changes to TvFin. Update the TV by running `./update.sh` on the server.
 
+## 1.4.1 – 2026-11-14
+
+### Fixed
+- 4:3 videos were stretched to 16:9 on the TV. The player now keeps the video's aspect ratio (black bars on the sides).
+
 ## 1.4.0 – 2026-11-14
 
 ### Added
