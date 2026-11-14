@@ -1,4 +1,4 @@
-/* Designet til 1920x1080. Undgår flex "gap" og CSS grid for ældre Tizen-browsere. */
+/* Designed for 1920x1080. Avoids flex "gap" and CSS grid for older Tizen browsers. */
 :root {
     --bg: #0f1016;
     --bg2: #1a1c26;
@@ -73,7 +73,7 @@ body:not(.playing) #av-player { display: none; }
 }
 .topbar .who { flex: 1; margin-left: 30px; color: var(--muted); font-size: 28px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* ---------- Knapper / input ---------- */
+/* ---------- Buttons / input ---------- */
 .btn {
     display: inline-block;
     padding: 18px 44px;
@@ -124,7 +124,7 @@ body:not(.playing) #av-player { display: none; }
     color: #fff;
 }
 
-/* ---------- Rækker og kort ---------- */
+/* ---------- Rows and cards ---------- */
 .row { margin-top: 26px; }
 .row h2 { font-size: 32px; margin: 0 80px 14px; font-weight: 600; }
 .row-items {
@@ -184,7 +184,7 @@ body:not(.playing) #av-player { display: none; }
 
 .grid { padding: 20px 70px; }
 
-/* Plakatkort / Tommel kort: billede med tekst i en boks */
+/* Poster cards / Thumb cards: image with text in a box */
 .card.boxed { background: var(--bg2); border-radius: 14px; padding-bottom: 14px; }
 .card.boxed .poster { border-radius: 14px 14px 0 0; }
 .card.boxed .card-title, .card.boxed .card-sub { padding: 0 16px; }
@@ -196,7 +196,7 @@ body:not(.playing) #av-player { display: none; }
 .card.banner { width: 860px; }
 .card.banner .poster { padding-top: 18.5%; }
 
-/* Liste */
+/* List */
 .grid.list { padding: 20px 70px; }
 .list-item {
     position: relative;
@@ -227,7 +227,7 @@ body:not(.playing) #av-player { display: none; }
 }
 .overview { margin: 10px 80px 0; max-width: 1400px; color: var(--muted); font-size: 24px; line-height: 1.4; max-height: 136px; overflow: hidden; }
 
-/* ---------- Detaljeside ---------- */
+/* ---------- Info page ---------- */
 .detail-bg {
     position: absolute; left: 0; top: 0; right: 0; height: 900px;
     background: center top / cover no-repeat;
@@ -308,7 +308,7 @@ body:not(.playing) #av-player { display: none; }
 .dialog h2 { margin: 0 0 24px; font-size: 34px; }
 .dialog .btn { display: block; margin: 16px 60px; }
 
-/* ---------- Afspiller ---------- */
+/* ---------- Player ---------- */
 #player-ui {
     position: fixed; left: 0; top: 0; right: 0; bottom: 0;
     z-index: 40;
@@ -338,11 +338,11 @@ body:not(.playing) #av-player { display: none; }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Næste afsnit */
+/* Next episode */
 .upnext-label { font-size: 24px; color: var(--accent2); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 16px; }
 .upnext-img { position: relative; width: 480px; height: 270px; margin: 0 auto 20px; border-radius: 12px; overflow: hidden; background: var(--card); }
 
-/* Undertekster */
+/* Subtitles */
 #subs {
     position: fixed; left: 160px; right: 160px; bottom: 70px;
     z-index: 39;
@@ -363,7 +363,7 @@ body.ui-visible #subs { bottom: 250px; }
     text-shadow: 0 2px 4px #000;
 }
 
-/* Spor-menu */
+/* Track menu */
 #track-menu {
     position: fixed; right: 60px; top: 80px; bottom: 260px;
     z-index: 42;
@@ -388,7 +388,7 @@ body.ui-visible #subs { bottom: 250px; }
 .tm-item.focused { background: #fff; color: #111; }
 .tm-item.focused.on:before { color: #111; }
 
-/* Søgning */
+/* Search */
 .search-box { padding: 10px 80px 0; }
 .search-box .input { margin: 0; width: 900px; text-align: left; }
 .search-hint { margin: 10px 80px 0; color: var(--muted); font-size: 22px; }

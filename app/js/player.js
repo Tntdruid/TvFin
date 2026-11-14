@@ -1,5 +1,5 @@
-/* Afspiller: AVPlay på Samsung TV, <video> (+ hls.js) i browser.
-   Rapporterer position til Jellyfin, vælger lyd/undertekster og tegner tekst-undertekster selv. */
+/* Player: AVPlay on Samsung TVs, <video> (+ hls.js) in a browser.
+   Reports position to Jellyfin, picks audio/subtitles and renders text subtitles itself. */
 var Player = (function () {
     var TICKS_PER_MS = 10000;
     var PROGRESS_INTERVAL = 10000;
@@ -8,12 +8,12 @@ var Player = (function () {
     function AvPlayBackend() {
         var av = webapis.avplay;
         this.open = function (url, startMs, ev) {
-            try { av.stop(); av.close(); } catch (e) { /* ingen aktiv */ }
+            try { av.stop(); av.close(); } catch (e) { /* nothing active */ }
             av.open(url);
             av.setDisplayRect(0, 0, 1920, 1080);
             try {
                 if (webapis.productinfo && webapis.productinfo.isUdPanelSupported()) av.setStreamingProperty('SET_MODE_4K', 'TRUE');
-            } catch (e) { /* ikke understøttet */ }
+            } catch (e) { /* not supported */ }
             av.setListener({
                 onbufferingstart: function () { ev.buffering(true); },
                 onbufferingprogress: function () {},
@@ -36,7 +36,7 @@ var Player = (function () {
         this.seek = function (ms, done) { av.seekTo(Math.max(0, ms), done || function () {}, done || function () {}); };
         this.time = function () { try { return av.getCurrentTime(); } catch (e) { return 0; } };
         this.duration = function () { try { return av.getDuration(); } catch (e) { return 0; } };
-        // Vælg det n'te lydspor i filen (direkte afspilning). Returnerer true hvis det lykkedes.
+        // Select the n-th audio track in the file (direct play). Returns true on success.
         this.selectAudio = function (n) {
             try {
                 var tracks = av.getTotalTrackInfo().filter(function (tr) { return tr.type === 'AUDIO'; });
@@ -106,7 +106,7 @@ var Player = (function () {
         };
     }
 
-    // ---------- Undertekster (WebVTT) ----------
+    // ---------- Subtitles (WebVTT) ----------
     var Subs = (function () {
         var cues = [], timer = null, box = null, lastHtml = '';
         function parseTime(s) {
@@ -116,7 +116,7 @@ var Player = (function () {
             return ((h * 60 + min) * 60 + sec) * 1000;
         }
         function clean(text) {
-            // Escape alt, men behold <i> og <b>; fjern ASS-tags som {\an8}
+            // Escape everything but keep <i> and <b>; strip ASS tags like {\an8}
             return text.replace(/\{\\[^}]*\}/g, '')
                 .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
                 .replace(/&lt;(\/?)(i|b)&gt;/g, '<$1$2>')
@@ -158,7 +158,7 @@ var Player = (function () {
                     if (self.token !== token) return;
                     cues = parse(txt);
                     timer = setInterval(function () { render(getTime()); }, 200);
-                }).catch(function () { /* ingen undertekster */ });
+                }).catch(function () { /* no subtitles */ });
             },
             clear: function () {
                 this.token = null;
@@ -172,7 +172,7 @@ var Player = (function () {
         };
     })();
 
-    // ---------- Tilstand ----------
+    // ---------- State ----------
     var active = false;
     var backend = null;
     var session = null;   // { item, info, posMs, started, audioIndex, subIndex, burnIn }
@@ -253,12 +253,12 @@ var Player = (function () {
         if (session && session.started) Api.report('progress', reportData(eventName || 'TimeUpdate'));
     }
 
-    // ---------- Valg af spor ----------
+    // ---------- Track selection ----------
     function streamsOf(type, streams) {
         return (streams || []).filter(function (s) { return s.Type === type; });
     }
 
-    // Find ønsket lyd-/undertekstspor ud fra gemte sprogvalg, ellers serverens standard (brugerens Jellyfin-indstillinger).
+    // Pick audio/subtitle tracks from saved language choices, else the server default (the user's Jellyfin settings).
     function pickTracks(streams, defAudio, defSub) {
         var prefs = Api.state.prefs || {};
         var audios = streamsOf('Audio', streams), subs = streamsOf('Subtitle', streams);
@@ -291,7 +291,7 @@ var Player = (function () {
         return /srt|subrip|vtt|ass|ssa|mov_text|ttml/i.test(s.Codec || '');
     }
 
-    // Position i filen blandt ikke-eksterne lydspor (til AVPlay's sporvalg).
+    // Position in the file among non-external audio tracks (for AVPlay's track selection).
     function audioPosition(index) {
         var list = streamsOf('Audio', session.info.streams).filter(function (s) { return !s.IsExternal; });
         for (var i = 0; i < list.length; i++) if (list[i].Index === index) return i;
@@ -309,7 +309,7 @@ var Player = (function () {
     }
 
     // ---------- Start / stop ----------
-    // opts: { audioIndex, subIndex } – udelades for at bruge gemte sprogvalg
+    // opts: { audioIndex, subIndex } – omit to use saved language choices
     async function start(item, startTicks, exitCallback, opts) {
         if (active) await teardown(false);
         opts = opts || {};
@@ -326,13 +326,13 @@ var Player = (function () {
 
         var info, tracks;
         try {
-            // Find sporvalg ud fra elementets kilde (hvis kendt), så serveren kan omkode korrekt fra start.
+            // Pick tracks from the item's source (if known) so the server can transcode correctly from the start.
             var src0 = item.MediaSources && item.MediaSources[0];
             tracks = src0 ? pickTracks(src0.MediaStreams, src0.DefaultAudioStreamIndex, src0.DefaultSubtitleStreamIndex) : {};
             if (opts.audioIndex !== undefined) tracks.audio = opts.audioIndex;
             if (opts.subIndex !== undefined) tracks.sub = opts.subIndex;
 
-            // Browser kan ikke skifte lydspor i direkte afspilning -> lad serveren omkode hvis det ikke er første spor.
+            // Browsers can't switch audio tracks in direct play -> let the server transcode if it isn't the first track.
             var noDirect = false;
             if (!Api.isTizen && src0 && tracks.audio !== undefined) {
                 var firstAudio = streamsOf('Audio', src0.MediaStreams)[0];
@@ -367,7 +367,7 @@ var Player = (function () {
                 started: function () {
                     if (!session || session.started) return;
                     session.started = true;
-                    // Direkte afspilning på TV: vælg lydspor i afspilleren
+                    // Direct play on the TV: select the audio track in the player
                     if (info.method === 'DirectPlay' && session.audioIndex !== undefined) {
                         var n = audioPosition(session.audioIndex);
                         if (n > 0 || streamsOf('Audio', info.streams).length > 1) backend.selectAudio(Math.max(0, n));
@@ -390,7 +390,7 @@ var Player = (function () {
         stop();
     }
 
-    // Stop afspilning og rapportér. full=false bruges ved genstart (skift af spor), hvor skærmen ikke skal skifte.
+    // Stop playback and report. full=false is used for restarts (track change), where the screen should not change.
     async function teardown(full) {
         if (!active && !session) return null;
         active = false;
@@ -434,7 +434,7 @@ var Player = (function () {
         if (cb) cb(item, !!ended);
     }
 
-    // Genstart samme element ved nuværende position med andre spor.
+    // Restart the same item at the current position with other tracks.
     async function restartWith(opts) {
         if (!session) return;
         var item = session.item, cb = onExit;
@@ -443,7 +443,7 @@ var Player = (function () {
         start(item, pos * TICKS_PER_MS, cb, opts);
     }
 
-    // ---------- Spor-menu ----------
+    // ---------- Track menu ----------
     function trackLabel(s) {
         return s.DisplayTitle || [s.Language, s.Codec].filter(Boolean).join(' · ') || t('unknown');
     }
@@ -497,7 +497,7 @@ var Player = (function () {
             if (index === session.subIndex) return;
             var sub = findStream(index);
             Api.savePrefs({ subLang: index === -1 ? 'off' : (sub && sub.Language ? sub.Language : null) });
-            // Tekst-undertekster (eller slå fra) kan skiftes uden genstart, medmindre de nuværende er brændt ind.
+            // Text subtitles (or off) can be switched without a restart, unless the current ones are burned in.
             if (!session.burnIn && (index === -1 || isTextSub(sub))) {
                 session.subIndex = index;
                 applySubtitles();
@@ -508,7 +508,7 @@ var Player = (function () {
         }
     }
 
-    // ---------- Styring ----------
+    // ---------- Controls ----------
     function togglePause(forceState) {
         if (!backend || !session || !session.started) return;
         var paused = backend.paused();
@@ -555,11 +555,11 @@ var Player = (function () {
             case 19: togglePause('pause'); return true;                // Pause
             case 37: seekBy(-10000); return true;
             case 39: seekBy(10000); return true;
-            case 412: seekBy(-30000); return true;                      // Spol tilbage
-            case 417: seekBy(30000); return true;                       // Spol frem
-            case 38: openMenu(); return true;                           // Op: lyd/undertekster
+            case 412: seekBy(-30000); return true;                      // Rewind
+            case 417: seekBy(30000); return true;                       // Fast forward
+            case 38: openMenu(); return true;                           // Up: audio/subtitles
             case 40: showUi(); return true;
-            case 10009: case 27: case 8: case 413: stop(); return true; // Tilbage / Stop
+            case 10009: case 27: case 8: case 413: stop(); return true; // Back / Stop
         }
         return false;
     }
@@ -569,7 +569,7 @@ var Player = (function () {
     });
     window.addEventListener('beforeunload', function () { if (active) stop(); });
 
-    // Klik i spor-menuen (browser-test)
+    // Clicks in the track menu (browser testing)
     document.addEventListener('click', function (e) {
         if (!menuOpen) return;
         var node = e.target.closest ? e.target.closest('.tm-item') : null;

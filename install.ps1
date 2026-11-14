@@ -1,5 +1,5 @@
-# Installerer TvFin på et Samsung TV via Docker (samme container som georift/install-jellyfin-tizen).
-# Brug:  .\install.ps1 192.168.1.50
+# Installs TvFin on a Samsung TV via Docker (same container as georift/install-jellyfin-tizen).
+# Usage:  .\install.ps1 192.168.1.50
 param(
     [Parameter(Mandatory = $true)][string]$TvIp
 )
@@ -7,7 +7,7 @@ $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
 
 if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
-    Write-Host "Docker er ikke installeret. Hent Docker Desktop: https://www.docker.com/products/docker-desktop/" -ForegroundColor Red
+    Write-Host "Docker is not installed. Get Docker Desktop: https://www.docker.com/products/docker-desktop/" -ForegroundColor Red
     exit 1
 }
 

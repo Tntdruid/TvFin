@@ -1,4 +1,4 @@
-/* Oversættelser. Sproget følger TV'et/browseren, men kan skiftes på forsiden. */
+/* Translations. The language follows the TV/browser but can be switched on the home screen. */
 var I18n = (function () {
     var dict = {
         da: {
@@ -153,8 +153,9 @@ var I18n = (function () {
     }
 
     var saved = null;
-    try { saved = localStorage.getItem(KEY); } catch (e) { /* ignorer */ }
+    try { saved = localStorage.getItem(KEY); } catch (e) { /* ignore */ }
     var lang = normalize(saved) || normalize(navigator.language) || 'en';
+    try { document.documentElement.lang = lang; } catch (e) { /* ignore */ }
 
     function t(key, args) {
         var s = (dict[lang] && dict[lang][key]) || dict.en[key] || key;
@@ -164,7 +165,7 @@ var I18n = (function () {
 
     function set(code) {
         lang = normalize(code) || lang;
-        try { localStorage.setItem(KEY, lang); } catch (e) { /* ignorer */ }
+        try { localStorage.setItem(KEY, lang); } catch (e) { /* ignore */ }
     }
 
     function next() {
@@ -172,7 +173,7 @@ var I18n = (function () {
         return lang;
     }
 
-    // På TV'et: brug TV'ets systemsprog, hvis brugeren ikke selv har valgt.
+    // On the TV: use the TV's system language unless the user has picked one.
     function detectTv(cb) {
         if (saved || !window.tizen || !tizen.systeminfo) return;
         try {
@@ -180,7 +181,7 @@ var I18n = (function () {
                 var code = normalize(l.language);
                 if (code && code !== lang) { lang = code; if (cb) cb(); }
             });
-        } catch (e) { /* ikke tilgængelig */ }
+        } catch (e) { /* not available */ }
     }
 
     return {

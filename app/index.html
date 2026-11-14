@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<html lang="da">
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>TvFin</title>
     <link rel="stylesheet" href="css/style.css">
     <script>
-        // Samsung's TV-API'er findes kun på selve TV'et.
+        // Samsung's TV APIs only exist on the TV itself.
         if (window.tizen) {
             document.write('<script src="$WEBAPIS/webapis/webapis.js"><\/script>');
         }
-        // Designet til 1920 px. Hvis TV'et rapporterer en større skærm (fx 4K), skaleres alt op.
+        // Designed for 1920 px. If the TV reports a larger screen (e.g. 4K), everything is scaled up.
         (function () {
             function fit() {
                 var w = window.innerWidth;

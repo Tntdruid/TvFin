@@ -1,4 +1,4 @@
-/* Simpel rumlig navigation til fjernbetjening: finder nærmeste .focusable i pilens retning. */
+/* Simple spatial navigation for the remote: finds the nearest .focusable in the arrow's direction. */
 var Nav = (function () {
     var scope = document;
     var current = null;
@@ -20,7 +20,7 @@ var Nav = (function () {
         ensureVisible(el);
     }
 
-    // Ruller forældre-containere (data-scroll="x"/"y") så elementet er synligt.
+    // Scrolls parent containers (data-scroll="x"/"y") so the element is visible.
     function ensureVisible(el) {
         var p = el.parentElement;
         while (p && p !== document.body) {
@@ -54,15 +54,15 @@ var Nav = (function () {
             var r = el.getBoundingClientRect();
             var x = r.left + r.width / 2, y = r.top + r.height / 2;
             var dx = x - cx, dy = y - cy, score;
-            // Midtpunkter bruges, fordi det fokuserede element er forstørret (scale) og kan overlappe naboer.
+            // Centers are used because the focused element is scaled up and can overlap its neighbours.
             if (dir === 'right' || dir === 'left') {
                 if (dir === 'right' ? dx <= 1 : dx >= -1) return;
                 score = Math.abs(dx) + Math.abs(dy) * 4;
             } else {
                 if (dir === 'down' ? dy <= 1 : dy >= -1) return;
-                if (Math.abs(dy) < Math.min(cr.height, r.height) / 2) return; // samme række
+                if (Math.abs(dy) < Math.min(cr.height, r.height) / 2) return; // same row
 
-                // Brug venstrekant eller midte (det der passer bedst), så venstrestillede lister føles naturlige
+                // Use left edge or center (whichever fits best), so left-aligned lists feel natural
                 score = Math.abs(dy) + Math.min(Math.abs(dx), Math.abs(r.left - cr.left)) * 1.5;
             }
             if (score < bestScore) { bestScore = score; best = el; }

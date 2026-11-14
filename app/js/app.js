@@ -1,8 +1,8 @@
-/* Skærme, routing og fjernbetjening. */
+/* Screens, routing and remote control. */
 var App = (function () {
     var root = document.getElementById('app');
     var stack = [];          // [{ name, params, focusKey }]
-    var screen = null;       // aktiv skærm-instans
+    var screen = null;       // active screen instance
     var dialog = null;
 
     function esc(s) {
@@ -87,7 +87,7 @@ var App = (function () {
         if (d.prevFocus && root.contains(d.prevFocus)) Nav.focus(d.prevFocus); else Nav.focusFirst();
     }
 
-    // ---------- Kort ----------
+    // ---------- Cards ----------
     function isWide(it) { return it.Type === 'Episode' || it.Type === 'Video' || it.Type === 'CollectionFolder' || it.Type === 'UserView'; }
 
     function cardTexts(it, keyPrefix) {
@@ -102,7 +102,7 @@ var App = (function () {
         return { title: title, sub: sub };
     }
 
-    // Billede + fallback-navn + set-mærke + fremskridt (fælles for alle visninger)
+    // Image + fallback name + played badge + progress (shared by all view modes)
     function imageBlock(it, urls) {
         var ud = it.UserData || {};
         var pct = ud.PlayedPercentage || 0;
@@ -157,7 +157,7 @@ var App = (function () {
             items.map(function (it) { return card(it, wide, key); }).join('') + '</div></section>';
     }
 
-    // Fælles håndtering af et valgt element (mappe -> åbn, video -> afspil).
+    // Common handling of a selected item (folder -> open, video -> info page).
     function openItem(it) {
         if (it.IsFolder || it.Type === 'CollectionFolder' || it.Type === 'UserView') {
             go('library', { item: it });
@@ -166,7 +166,7 @@ var App = (function () {
         go('detail', { item: it });
     }
 
-    // Gem fokus og tegn den aktuelle skærm igen (fx efter "set"/favorit).
+    // Save focus and redraw the current screen (e.g. after played/favorite).
     function refresh() {
         var entry = stack[stack.length - 1];
         if (entry && Nav.current) entry.focusKey = Nav.current.getAttribute('data-key');
@@ -209,11 +209,11 @@ var App = (function () {
         });
     }
 
-    // Efter et afsnit: vis "Næste afsnit om 10 sek" og start det automatisk.
+    // After an episode: show "Next episode in 10 sec" and start it automatically.
     async function upNext(last) {
         await render();
         var next = null;
-        try { next = await Api.nextEpisode(last); } catch (e) { /* ingen */ }
+        try { next = await Api.nextEpisode(last); } catch (e) { /* none */ }
         if (!next || Player.active) return;
         var n = 10, timer = null;
         var img = Api.imageUrls(next, true, 300);
@@ -249,7 +249,7 @@ var App = (function () {
         }
     }
 
-    // ---------- Skærme ----------
+    // ---------- Screens ----------
     var Screens = {};
 
     Screens.server = function () {
@@ -313,7 +313,7 @@ var App = (function () {
                     go('home');
                 }
             } catch (e) {
-                if (e.status === 404 || e.status === 401) { stopPoll(); startQc(); }  // kode udløbet
+                if (e.status === 404 || e.status === 401) { stopPoll(); startQc(); }  // code expired
             }
         }
         return {
@@ -386,7 +386,7 @@ var App = (function () {
         };
     };
 
-    // Sortering huskes pr. mappe
+    // Sorting is remembered per folder
     var SORT_KEY = 'tvfin-sort';
     var SORT_ORDER = ['name', 'added', 'released', 'rating', 'played', 'random'];
     function loadSorts() { try { return JSON.parse(localStorage.getItem(SORT_KEY) || '{}'); } catch (e) { return {}; } }
@@ -394,10 +394,10 @@ var App = (function () {
     function setSort(id, s) {
         var all = loadSorts();
         all[id] = s;
-        try { localStorage.setItem(SORT_KEY, JSON.stringify(all)); } catch (e) { /* ignorer */ }
+        try { localStorage.setItem(SORT_KEY, JSON.stringify(all)); } catch (e) { /* ignore */ }
     }
 
-    // Visning (plakater, tommel, banner, liste …) huskes pr. mappe
+    // View mode (posters, thumbs, banner, list …) is remembered per folder
     var VIEW_KEY = 'tvfin-view';
     var VIEW_ORDER = ['auto', 'poster', 'posterCard', 'thumb', 'thumbCard', 'banner', 'list'];
     function loadViews() { try { return JSON.parse(localStorage.getItem(VIEW_KEY) || '{}'); } catch (e) { return {}; } }
@@ -405,7 +405,7 @@ var App = (function () {
     function setView(id, v) {
         var all = loadViews();
         all[id] = v;
-        try { localStorage.setItem(VIEW_KEY, JSON.stringify(all)); } catch (e) { /* ignorer */ }
+        try { localStorage.setItem(VIEW_KEY, JSON.stringify(all)); } catch (e) { /* ignore */ }
     }
 
     Screens.library = function (params) {
@@ -470,7 +470,7 @@ var App = (function () {
                 var urls = Api.imageUrls(it, wide, 540);
                 var backdrop = Api.backdropUrl(it);
 
-                // Meta-linje: år · spilletid · slutter kl.
+                // Meta line: year · runtime · ends at
                 var meta = [];
                 if (it.ProductionYear) meta.push(it.ProductionYear);
                 if (it.RunTimeTicks) {
@@ -505,7 +505,7 @@ var App = (function () {
                     '<div class="btn icon focusable' + (ud.IsFavorite ? ' on' : '') + '" data-action="fav" data-key="fav">' + (ud.IsFavorite ? '♥' : '♡') + '<span class="tip">' + esc(t('favorite')) + '</span></div>' +
                     '</div></div></div>';
 
-                // Detaljer
+                // Details
                 html += '<div class="detail-body">';
                 var lines = streamLines(it);
                 if (lines.length) {
@@ -529,7 +529,7 @@ var App = (function () {
                 }
                 html += '</div>';
 
-                // Kapitler / scener
+                // Chapters / scenes
                 var chapters = it.Chapters || [];
                 if (chapters.length) {
                     html += '<section class="row"><h2>' + esc(t('scenes')) + '</h2><div class="row-items" data-scroll="x">' +
@@ -579,7 +579,7 @@ var App = (function () {
                 box.innerHTML = list.length
                     ? '<div class="grid">' + list.map(function (it) { return card(it, isWide(it), 'search'); }).join('') + '</div>'
                     : '<p class="muted pad">' + esc(t('no_results')) + '</p>';
-                // Tilbage fra en detaljeside: genskab fokus på det valgte kort
+                // Back from an info page: restore focus to the selected card
                 if (entry.focusKey) {
                     var target = box.querySelector('[data-key="' + entry.focusKey + '"]');
                     if (target) Nav.focus(target);
@@ -610,7 +610,7 @@ var App = (function () {
             action: function (a, el) {
                 if (a === 'search') {
                     run(document.getElementById('search-input').value);
-                    // Efter "Færdig" på tastaturet: hop ned til første resultat
+                    // After "Done" on the keyboard: jump down to the first result
                     setTimeout(function () {
                         var first = document.querySelector('#search-results .card');
                         if (first) Nav.focus(first);
@@ -627,7 +627,7 @@ var App = (function () {
         refresh();
     }
 
-    // ---------- Taster ----------
+    // ---------- Keys ----------
     var KEYS = { LEFT: 37, UP: 38, RIGHT: 39, DOWN: 40, ENTER: 13, BACK: 10009, ESC: 27, BACKSPACE: 8, DONE: 65376, CANCEL: 65385 };
 
     function activate(el) {
@@ -672,7 +672,7 @@ var App = (function () {
         e.preventDefault();
     });
 
-    // Mus/klik (praktisk ved test i browser)
+    // Mouse/click (handy when testing in a browser)
     document.addEventListener('click', function (e) {
         if (Player.active) return;
         var el = e.target.closest ? e.target.closest('.focusable') : null;
@@ -684,9 +684,9 @@ var App = (function () {
     function registerTvKeys() {
         try {
             ['MediaPlayPause', 'MediaPlay', 'MediaPause', 'MediaStop', 'MediaFastForward', 'MediaRewind'].forEach(function (key) {
-                try { tizen.tvinputdevice.registerKey(key); } catch (e) { /* ikke tilgængelig */ }
+                try { tizen.tvinputdevice.registerKey(key); } catch (e) { /* not available */ }
             });
-        } catch (e) { /* ikke Tizen */ }
+        } catch (e) { /* not Tizen */ }
     }
 
     async function init() {
@@ -698,13 +698,13 @@ var App = (function () {
             var ok = await Api.validateSession();
             go(ok ? 'home' : 'login');
         } catch (e) {
-            go('home');   // netværksfejl: home viser fejl + "prøv igen"
+            go('home');   // network error: home shows the error + "try again"
         }
     }
 
     init();
 
-    // Billede fejlede: prøv næste URL, eller fjern billedet så navnet ses.
+    // Image failed: try the next URL, or remove the image so the name shows.
     function imgErr(img) {
         var rest = img.getAttribute('data-alt');
         if (rest) {

@@ -1,18 +1,18 @@
-/* Jellyfin API-klient. Skrevet uden ?. og ?? så den kører på ældre Tizen-TV'er. */
+/* Jellyfin API client. Written without ?. and ?? so it runs on older Tizen TVs. */
 var Api = (function () {
     var CLIENT = 'TvFin';
     var VERSION = '1.3.0';
     var STORE_KEY = 'tvfin';
     var isTizen = !!window.tizen;
 
-    // prefs: { audioLang, subLang } – sidst valgte sprog for lyd/undertekster ('off' = ingen undertekster)
+    // prefs: { audioLang, subLang } – last chosen audio/subtitle language ('off' = no subtitles)
     var state = { server: null, token: null, userId: null, userName: null, serverName: null, deviceId: null, prefs: {} };
 
     function load() {
         try {
             var saved = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
             for (var k in saved) if (saved.hasOwnProperty(k)) state[k] = saved[k];
-        } catch (e) { /* ingen lagring */ }
+        } catch (e) { /* no storage */ }
         if (!state.deviceId) {
             state.deviceId = 'tvfin-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
             save();
@@ -20,7 +20,7 @@ var Api = (function () {
     }
 
     function save() {
-        try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* ignorer */ }
+        try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* ignore */ }
     }
 
     function deviceName() { return isTizen ? 'Samsung TV' : 'Browser'; }
@@ -56,7 +56,7 @@ var Api = (function () {
         return text ? JSON.parse(text) : null;
     }
 
-    // Prøv flere stier (nye endpoints i Jellyfin 10.9+, gamle som fallback).
+    // Try several paths (new endpoints in Jellyfin 10.9+, old ones as fallback).
     async function firstOk(method, paths, body) {
         var lastErr;
         for (var i = 0; i < paths.length; i++) {
@@ -68,7 +68,7 @@ var Api = (function () {
         throw lastErr;
     }
 
-    // "192.168.1.20" -> prøver http://192.168.1.20, :8096, https:// ...
+    // "192.168.1.20" -> tries http://192.168.1.20, :8096, https:// ...
     function candidates(input) {
         var s = (input || '').trim().replace(/\/+$/, '');
         if (!s) return [];
@@ -93,7 +93,7 @@ var Api = (function () {
                     save();
                     return info;
                 }
-            } catch (e) { /* prøv næste */ }
+            } catch (e) { /* try next */ }
         }
         throw new Error(t('server_not_found', { s: input }));
     }
@@ -146,7 +146,7 @@ var Api = (function () {
     function views() {
         return firstOk('GET', ['/UserViews?userId=' + state.userId, '/Users/' + state.userId + '/Views']);
     }
-    // Sortering: nøgle -> Jellyfin SortBy og standard-retning
+    // Sorting: key -> Jellyfin SortBy and default direction
     var SORTS = {
         name: { by: 'SortName', desc: false },
         added: { by: 'DateCreated,SortName', desc: true },
@@ -156,7 +156,7 @@ var Api = (function () {
         random: { by: 'Random', desc: false }
     };
 
-    // sort: { key, desc } – udelades for afsnit/sæsoner, der altid står i rækkefølge
+    // sort: { key, desc } – omitted for episodes/seasons, which are always in order
     function children(parent, sort) {
         var q = 'ParentId=' + parent.Id + '&Limit=1000&' + FIELDS;
         var s = sort && SORTS[sort.key];
@@ -215,7 +215,7 @@ var Api = (function () {
         return null;
     }
 
-    // Banner-billede (bredt 1000x185); falder tilbage til tommel/baggrund.
+    // Banner image (wide 1000x185); falls back to thumb/backdrop.
     function bannerUrls(it, height) {
         var tags = it.ImageTags || {};
         var list = [];
@@ -229,8 +229,8 @@ var Api = (function () {
         return list.concat(imageUrls(it, true, height * 2));
     }
 
-    // Returnerer en prioriteret liste af billed-URL'er. Appen prøver dem i rækkefølge (onerror -> næste),
-    // så kort får et billede selv hvis serveren ikke sender ImageTags med.
+    // Returns a prioritized list of image URLs. The app tries them in order (onerror -> next),
+    // so cards get an image even if the server doesn't send ImageTags.
     function imageUrls(it, wide, height) {
         var tags = it.ImageTags || {};
         var backs = it.BackdropImageTags || [];
@@ -245,7 +245,7 @@ var Api = (function () {
             if (backs.length) add(it.Id, 'Backdrop', backs[0]);
             if (it.ParentBackdropItemId && parentBacks.length) add(it.ParentBackdropItemId, 'Backdrop', parentBacks[0]);
             if (tags.Primary) add(it.Id, 'Primary', tags.Primary);
-            // Gæt uden tags (bruges kun hvis de foregående fejler)
+            // Guesses without tags (only used if the ones above fail)
             add(it.Id, 'Thumb'); add(it.Id, 'Backdrop'); add(it.Id, 'Primary');
             if (it.SeriesId) { add(it.SeriesId, 'Thumb'); add(it.SeriesId, 'Backdrop'); }
         } else {
@@ -301,8 +301,8 @@ var Api = (function () {
         };
     }
 
-    // Tekst-undertekster hentes som WebVTT og tegnes af appen selv (ingen omkodning).
-    // Billed-undertekster (PGS/DVD) brændes ind af serveren.
+    // Text subtitles are fetched as WebVTT and rendered by the app itself (no transcoding).
+    // Image subtitles (PGS/DVD) are burned in by the server.
     var SUBTITLE_PROFILES = ['vtt', 'webvtt', 'srt', 'subrip', 'ass', 'ssa', 'mov_text', 'ttml', 'sub', 'smi'].map(function (f) {
         return { Format: f, Method: 'External' };
     }).concat(['pgssub', 'pgs', 'dvdsub', 'dvbsub', 'vobsub'].map(function (f) {
@@ -347,7 +347,7 @@ var Api = (function () {
 
     function stopEncoding(playSessionId) {
         return request('DELETE', '/Videos/ActiveEncodings?deviceId=' + state.deviceId + '&playSessionId=' + playSessionId)
-            .catch(function () { /* ignorer */ });
+            .catch(function () { /* ignore */ });
     }
 
     load();

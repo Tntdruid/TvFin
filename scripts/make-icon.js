@@ -1,4 +1,4 @@
-// Genererer app/icon.png (512x512): gradient-firkant med play-trekant. Kør: node scripts/make-icon.js
+// Generates app/icon.png (512x512): gradient square with a play triangle. Run: node scripts/make-icon.js
 const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
@@ -6,13 +6,13 @@ const zlib = require('zlib');
 const S = 512;
 const px = Buffer.alloc(S * S * 4);
 const c1 = [123, 92, 255], c2 = [0, 164, 220];
-const r = 90; // hjørneradius
+const r = 90; // corner radius
 
 function inRounded(x, y) {
     const cx = Math.min(Math.max(x, r), S - 1 - r), cy = Math.min(Math.max(y, r), S - 1 - r);
     return (x - cx) ** 2 + (y - cy) ** 2 <= r * r;
 }
-// Play-trekant
+// Play triangle
 const A = [190, 140], B = [190, 372], C = [380, 256];
 function inTri(x, y) {
     const s = (p, q, t) => (p[0] - t[0]) * (q[1] - t[1]) - (q[0] - t[0]) * (p[1] - t[1]);

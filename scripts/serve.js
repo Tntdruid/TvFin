@@ -1,4 +1,4 @@
-// Lille statisk server til at teste appen i en browser: node scripts/serve.js  -> http://localhost:8080
+// Small static server for testing the app in a browser: node scripts/serve.js  -> http://localhost:8080
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
@@ -16,4 +16,4 @@ http.createServer((req, res) => {
         res.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store' });
         res.end(data);
     });
-}).listen(PORT, () => console.log('TvFin kører på http://localhost:' + PORT));
+}).listen(PORT, () => console.log('TvFin running at http://localhost:' + PORT));
