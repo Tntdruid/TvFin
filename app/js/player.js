@@ -1,4 +1,5 @@
-/* Afspiller: AVPlay på Samsung TV, <video> (+ hls.js) i browser. Rapporterer position til Jellyfin. */
+/* Afspiller: AVPlay på Samsung TV, <video> (+ hls.js) i browser.
+   Rapporterer position til Jellyfin, vælger lyd/undertekster og tegner tekst-undertekster selv. */
 var Player = (function () {
     var TICKS_PER_MS = 10000;
     var PROGRESS_INTERVAL = 10000;
@@ -35,6 +36,15 @@ var Player = (function () {
         this.seek = function (ms, done) { av.seekTo(Math.max(0, ms), done || function () {}, done || function () {}); };
         this.time = function () { try { return av.getCurrentTime(); } catch (e) { return 0; } };
         this.duration = function () { try { return av.getDuration(); } catch (e) { return 0; } };
+        // Vælg det n'te lydspor i filen (direkte afspilning). Returnerer true hvis det lykkedes.
+        this.selectAudio = function (n) {
+            try {
+                var tracks = av.getTotalTrackInfo().filter(function (tr) { return tr.type === 'AUDIO'; });
+                if (!tracks[n]) return false;
+                av.setSelectTrack('AUDIO', tracks[n].index);
+                return true;
+            } catch (e) { return false; }
+        };
         this.stop = function () { try { av.stop(); } catch (e) {} try { av.close(); } catch (e) {} };
     }
 
@@ -60,7 +70,7 @@ var Player = (function () {
             on('playing', function () { ev.buffering(false); if (!started) { started = true; ev.started(); } });
             on('timeupdate', function () { ev.time(video.currentTime * 1000); });
             on('ended', function () { ev.ended(); });
-            on('error', function () { ev.error(video.error); });
+            on('error', function () { ev.error(video.error && video.error.message ? video.error.message : 'media error'); });
             on('loadedmetadata', function () {
                 if (startMs > 0) video.currentTime = startMs / 1000;
                 video.play().catch(function (e) { ev.error(e); });
@@ -69,7 +79,7 @@ var Player = (function () {
             var isHls = url.indexOf('.m3u8') >= 0;
             if (isHls && !video.canPlayType('application/vnd.apple.mpegurl')) {
                 loadHlsJs(function () {
-                    if (!window.Hls || !window.Hls.isSupported()) return ev.error('HLS understøttes ikke');
+                    if (!window.Hls || !window.Hls.isSupported()) return ev.error('HLS');
                     hls = new window.Hls();
                     hls.loadSource(url);
                     hls.attachMedia(video);
@@ -84,6 +94,7 @@ var Player = (function () {
         this.seek = function (ms, done) { video.currentTime = Math.max(0, ms / 1000); if (done) done(); };
         this.time = function () { return video.currentTime * 1000; };
         this.duration = function () { return (video.duration || 0) * 1000; };
+        this.selectAudio = function () { return false; };
         this.stop = function () {
             listeners.forEach(function (l) { video.removeEventListener(l[0], l[1]); });
             listeners = [];
@@ -95,16 +106,84 @@ var Player = (function () {
         };
     }
 
+    // ---------- Undertekster (WebVTT) ----------
+    var Subs = (function () {
+        var cues = [], timer = null, box = null, lastHtml = '';
+        function parseTime(s) {
+            var p = s.trim().split(':');
+            var sec = parseFloat(p.pop().replace(',', '.'));
+            var min = parseInt(p.pop() || '0', 10), h = parseInt(p.pop() || '0', 10);
+            return ((h * 60 + min) * 60 + sec) * 1000;
+        }
+        function clean(text) {
+            // Escape alt, men behold <i> og <b>; fjern ASS-tags som {\an8}
+            return text.replace(/\{\\[^}]*\}/g, '')
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/&lt;(\/?)(i|b)&gt;/g, '<$1$2>')
+                .replace(/&lt;[^&]*&gt;/g, '');
+        }
+        function parse(vtt) {
+            var out = [];
+            vtt.replace(/\r/g, '').split(/\n\n+/).forEach(function (block) {
+                var lines = block.split('\n');
+                for (var i = 0; i < lines.length; i++) {
+                    if (lines[i].indexOf('-->') > 0) {
+                        var parts = lines[i].split('-->');
+                        var text = lines.slice(i + 1).join('\n').trim();
+                        if (text) out.push({ start: parseTime(parts[0]), end: parseTime(parts[1].trim().split(' ')[0]), html: clean(text).replace(/\n/g, '<br>') });
+                        break;
+                    }
+                }
+            });
+            return out;
+        }
+        function render(ms) {
+            var html = '';
+            for (var i = 0; i < cues.length; i++) {
+                if (cues[i].start <= ms && cues[i].end >= ms) html += (html ? '<br>' : '') + cues[i].html;
+            }
+            if (html !== lastHtml) {
+                lastHtml = html;
+                box.innerHTML = html ? '<span>' + html + '</span>' : '';
+            }
+        }
+        return {
+            load: function (url, getTime) {
+                this.clear();
+                box = document.getElementById('subs');
+                var token = {};
+                this.token = token;
+                var self = this;
+                fetch(url).then(function (r) { return r.ok ? r.text() : ''; }).then(function (txt) {
+                    if (self.token !== token) return;
+                    cues = parse(txt);
+                    timer = setInterval(function () { render(getTime()); }, 200);
+                }).catch(function () { /* ingen undertekster */ });
+            },
+            clear: function () {
+                this.token = null;
+                clearInterval(timer);
+                timer = null;
+                cues = [];
+                lastHtml = '';
+                var b = document.getElementById('subs');
+                if (b) b.innerHTML = '';
+            }
+        };
+    })();
+
     // ---------- Tilstand ----------
     var active = false;
     var backend = null;
-    var session = null;   // { item, info, posMs, durMs }
+    var session = null;   // { item, info, posMs, started, audioIndex, subIndex, burnIn }
     var progressTimer = null, hideTimer = null, seekTimer = null;
     var seekTarget = null;
     var onExit = null;
+    var menuOpen = false;
 
     var el = {};
     function $(id) { return document.getElementById(id); }
+    function esc(s) { return String(s === undefined || s === null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
     function fmt(ms) {
         var s = Math.max(0, Math.floor(ms / 1000));
@@ -116,6 +195,14 @@ var Player = (function () {
         var d = backend ? backend.duration() : 0;
         if (d > 0 && isFinite(d)) return d;
         return session && session.info.runTimeTicks ? session.info.runTimeTicks / TICKS_PER_MS : 0;
+    }
+
+    function currentMs() {
+        if (backend && session && session.started) {
+            var tm = backend.time();
+            if (tm > 0) return tm;
+        }
+        return session ? session.posMs : 0;
     }
 
     function updateUi() {
@@ -136,10 +223,14 @@ var Player = (function () {
 
     function showUi(stay) {
         el.ui.classList.remove('hidden');
+        document.body.classList.add('ui-visible');
         updateUi();
         clearTimeout(hideTimer);
-        if (!stay && !(backend && backend.paused())) {
-            hideTimer = setTimeout(function () { el.ui.classList.add('hidden'); }, 4000);
+        if (!stay && !menuOpen && !(backend && backend.paused())) {
+            hideTimer = setTimeout(function () {
+                el.ui.classList.add('hidden');
+                document.body.classList.remove('ui-visible');
+            }, 4000);
         }
     }
 
@@ -152,6 +243,8 @@ var Player = (function () {
             IsPaused: backend ? backend.paused() : false,
             CanSeek: true,
             PlayMethod: session.info.method,
+            AudioStreamIndex: session.audioIndex,
+            SubtitleStreamIndex: session.subIndex,
             EventName: eventName
         };
     }
@@ -160,9 +253,66 @@ var Player = (function () {
         if (session && session.started) Api.report('progress', reportData(eventName || 'TimeUpdate'));
     }
 
+    // ---------- Valg af spor ----------
+    function streamsOf(type, streams) {
+        return (streams || []).filter(function (s) { return s.Type === type; });
+    }
+
+    // Find ønsket lyd-/undertekstspor ud fra gemte sprogvalg, ellers serverens standard (brugerens Jellyfin-indstillinger).
+    function pickTracks(streams, defAudio, defSub) {
+        var prefs = Api.state.prefs || {};
+        var audios = streamsOf('Audio', streams), subs = streamsOf('Subtitle', streams);
+        var audio = defAudio, sub = defSub;
+        if (prefs.audioLang) {
+            var a = audios.filter(function (s) { return s.Language === prefs.audioLang; })[0];
+            if (a) audio = a.Index;
+        }
+        if ((audio === undefined || audio === null) && audios.length) {
+            audio = (audios.filter(function (s) { return s.IsDefault; })[0] || audios[0]).Index;
+        }
+        if (prefs.subLang === 'off') sub = -1;
+        else if (prefs.subLang) {
+            var m = subs.filter(function (s) { return s.Language === prefs.subLang && !s.IsForced; })[0] ||
+                subs.filter(function (s) { return s.Language === prefs.subLang; })[0];
+            if (m) sub = m.Index;
+        }
+        if (sub === undefined || sub === null) sub = -1;
+        return { audio: audio, sub: sub };
+    }
+
+    function findStream(index) {
+        if (!session) return null;
+        return session.info.streams.filter(function (s) { return s.Index === index; })[0] || null;
+    }
+
+    function isTextSub(s) {
+        if (!s) return false;
+        if (s.IsTextSubtitleStream !== undefined) return s.IsTextSubtitleStream;
+        return /srt|subrip|vtt|ass|ssa|mov_text|ttml/i.test(s.Codec || '');
+    }
+
+    // Position i filen blandt ikke-eksterne lydspor (til AVPlay's sporvalg).
+    function audioPosition(index) {
+        var list = streamsOf('Audio', session.info.streams).filter(function (s) { return !s.IsExternal; });
+        for (var i = 0; i < list.length; i++) if (list[i].Index === index) return i;
+        return -1;
+    }
+
+    function applySubtitles() {
+        Subs.clear();
+        var s = findStream(session.subIndex);
+        if (s && isTextSub(s) && !session.burnIn) {
+            var url = s.DeliveryUrl ? Api.state.server + s.DeliveryUrl : Api.subtitleUrl(session.item.Id, session.info.mediaSourceId, s.Index);
+            if (url.indexOf('api_key=') < 0 && url.indexOf('ApiKey=') < 0) url += (url.indexOf('?') < 0 ? '?' : '&') + 'api_key=' + Api.state.token;
+            Subs.load(url, currentMs);
+        }
+    }
+
     // ---------- Start / stop ----------
-    async function start(item, startTicks, exitCallback) {
-        if (active) await stop();
+    // opts: { audioIndex, subIndex } – udelades for at bruge gemte sprogvalg
+    async function start(item, startTicks, exitCallback, opts) {
+        if (active) await teardown(false);
+        opts = opts || {};
         active = true;
         onExit = exitCallback;
         document.body.classList.add('playing');
@@ -170,19 +320,44 @@ var Player = (function () {
         el.sub.textContent = item.SeriesName
             ? 'S' + (item.ParentIndexNumber || 0) + ':E' + (item.IndexNumber || 0) + ' · ' + item.Name
             : (item.ProductionYear || '');
+        el.hint.textContent = t('player_hint');
         el.spinner.classList.remove('hidden');
         showUi(true);
 
-        var info;
+        var info, tracks;
         try {
-            info = await Api.playbackInfo(item.Id);
+            // Find sporvalg ud fra elementets kilde (hvis kendt), så serveren kan omkode korrekt fra start.
+            var src0 = item.MediaSources && item.MediaSources[0];
+            tracks = src0 ? pickTracks(src0.MediaStreams, src0.DefaultAudioStreamIndex, src0.DefaultSubtitleStreamIndex) : {};
+            if (opts.audioIndex !== undefined) tracks.audio = opts.audioIndex;
+            if (opts.subIndex !== undefined) tracks.sub = opts.subIndex;
+
+            // Browser kan ikke skifte lydspor i direkte afspilning -> lad serveren omkode hvis det ikke er første spor.
+            var noDirect = false;
+            if (!Api.isTizen && src0 && tracks.audio !== undefined) {
+                var firstAudio = streamsOf('Audio', src0.MediaStreams)[0];
+                noDirect = !!firstAudio && firstAudio.Index !== tracks.audio;
+            }
+            info = await Api.playbackInfo(item.Id, {
+                audioIndex: tracks.audio, subIndex: tracks.sub,
+                mediaSourceId: src0 ? src0.Id : null, noDirectPlay: noDirect || opts.noDirectPlay
+            });
+            if (!src0) {
+                var picked = pickTracks(info.streams, info.defaultAudio, info.defaultSub);
+                if (tracks.audio === undefined) tracks.audio = picked.audio;
+                if (tracks.sub === undefined) tracks.sub = picked.sub;
+            }
         } catch (e) {
-            fail('Kunne ikke starte afspilning: ' + (e.message || e));
+            fail(t('start_error', { e: e.message || e }));
             return;
         }
         if (!active) return;
         var startMs = (startTicks || 0) / TICKS_PER_MS;
-        session = { item: item, info: info, posMs: startMs, started: false };
+        session = {
+            item: item, info: info, posMs: startMs, started: false,
+            audioIndex: tracks.audio, subIndex: tracks.sub,
+            burnIn: info.method !== 'DirectPlay' && /SubtitleMethod=Encode/i.test(info.url)
+        };
         backend = Api.isTizen && window.webapis && webapis.avplay ? new AvPlayBackend() : new HtmlBackend();
 
         try {
@@ -192,15 +367,21 @@ var Player = (function () {
                 started: function () {
                     if (!session || session.started) return;
                     session.started = true;
+                    // Direkte afspilning på TV: vælg lydspor i afspilleren
+                    if (info.method === 'DirectPlay' && session.audioIndex !== undefined) {
+                        var n = audioPosition(session.audioIndex);
+                        if (n > 0 || streamsOf('Audio', info.streams).length > 1) backend.selectAudio(Math.max(0, n));
+                    }
+                    applySubtitles();
                     Api.report('start', reportData());
                     progressTimer = setInterval(function () { progress(); }, PROGRESS_INTERVAL);
                     showUi();
                 },
-                ended: function () { if (session) session.posMs = durMs(); stop(); },
-                error: function (err) { fail('Afspilningsfejl: ' + (err && err.message ? err.message : err)); }
+                ended: function () { if (session) session.posMs = durMs(); stop(true); },
+                error: function (err) { fail(t('play_error', { e: err && err.message ? err.message : err })); }
             });
         } catch (e) {
-            fail('Afspilningsfejl: ' + (e.message || e));
+            fail(t('play_error', { e: e.message || e }));
         }
     }
 
@@ -209,35 +390,122 @@ var Player = (function () {
         stop();
     }
 
-    async function stop() {
-        if (!active) return;
+    // Stop afspilning og rapportér. full=false bruges ved genstart (skift af spor), hvor skærmen ikke skal skifte.
+    async function teardown(full) {
+        if (!active && !session) return null;
         active = false;
         clearInterval(progressTimer);
         clearTimeout(hideTimer);
         clearTimeout(seekTimer);
         seekTarget = null;
+        closeMenu();
+        Subs.clear();
         var s = session;
         if (backend && s && s.started) {
-            var t = backend.time();
-            if (t > 0) s.posMs = t;
+            var tm = backend.time();
+            if (tm > 0 && !s.ended) s.posMs = tm;
         }
         if (backend) backend.stop();
         backend = null;
         session = null;
-        el.ui.classList.add('hidden');
-        el.spinner.classList.add('hidden');
-        document.body.classList.remove('playing');
+        if (full) {
+            el.ui.classList.add('hidden');
+            el.spinner.classList.add('hidden');
+            document.body.classList.remove('playing');
+            document.body.classList.remove('ui-visible');
+        }
         if (s && s.started) {
-            var data = {
+            await Api.report('stop', {
                 ItemId: s.item.Id, MediaSourceId: s.info.mediaSourceId, PlaySessionId: s.info.playSessionId,
                 PositionTicks: Math.round(s.posMs * TICKS_PER_MS)
-            };
-            await Api.report('stop', data);
+            });
             if (s.info.method !== 'DirectPlay') Api.stopEncoding(s.info.playSessionId);
         }
+        return s;
+    }
+
+    async function stop(ended) {
+        if (!active) return;
+        if (ended && session) session.ended = true;
+        var item = session ? session.item : null;
+        await teardown(true);
         var cb = onExit;
         onExit = null;
-        if (cb) cb();
+        if (cb) cb(item, !!ended);
+    }
+
+    // Genstart samme element ved nuværende position med andre spor.
+    async function restartWith(opts) {
+        if (!session) return;
+        var item = session.item, cb = onExit;
+        var pos = currentMs();
+        await teardown(false);
+        start(item, pos * TICKS_PER_MS, cb, opts);
+    }
+
+    // ---------- Spor-menu ----------
+    function trackLabel(s) {
+        return s.DisplayTitle || [s.Language, s.Codec].filter(Boolean).join(' · ') || t('unknown');
+    }
+
+    function openMenu() {
+        if (!session || !session.started) return;
+        menuOpen = true;
+        var audios = streamsOf('Audio', session.info.streams);
+        var subs = streamsOf('Subtitle', session.info.streams);
+        var html = '<div class="tm-col" data-scroll="y"><h3>' + esc(t('audio')) + '</h3>' +
+            audios.map(function (s) {
+                return '<div class="tm-item focusable' + (s.Index === session.audioIndex ? ' on' : '') + '" data-type="audio" data-index="' + s.Index + '">' + esc(trackLabel(s)) + '</div>';
+            }).join('') + '</div>' +
+            '<div class="tm-col" data-scroll="y"><h3>' + esc(t('subtitles')) + '</h3>' +
+            '<div class="tm-item focusable' + (session.subIndex === -1 ? ' on' : '') + '" data-type="sub" data-index="-1">' + esc(t('off')) + '</div>' +
+            subs.map(function (s) {
+                return '<div class="tm-item focusable' + (s.Index === session.subIndex ? ' on' : '') + '" data-type="sub" data-index="' + s.Index + '">' + esc(trackLabel(s)) + '</div>';
+            }).join('') + '</div>';
+        el.menu.innerHTML = html;
+        el.menu.classList.remove('hidden');
+        Nav.setScope(el.menu);
+        Nav.focus(el.menu.querySelector('.tm-item.on') || el.menu.querySelector('.tm-item'));
+        showUi(true);
+    }
+
+    function closeMenu() {
+        if (!menuOpen) return;
+        menuOpen = false;
+        el.menu.classList.add('hidden');
+        el.menu.innerHTML = '';
+        Nav.setScope(document.getElementById('app'));
+        showUi();
+    }
+
+    function chooseTrack(node) {
+        var type = node.getAttribute('data-type');
+        var index = parseInt(node.getAttribute('data-index'), 10);
+        closeMenu();
+        if (!session) return;
+        if (type === 'audio') {
+            if (index === session.audioIndex) return;
+            var s = findStream(index);
+            Api.savePrefs({ audioLang: s && s.Language ? s.Language : null });
+            if (session.info.method === 'DirectPlay' && backend.selectAudio(audioPosition(index))) {
+                session.audioIndex = index;
+                progress('AudioTrackChange');
+            } else {
+                restartWith({ audioIndex: index, subIndex: session.subIndex });
+            }
+        } else {
+            if (index === session.subIndex) return;
+            var sub = findStream(index);
+            Api.savePrefs({ subLang: index === -1 ? 'off' : (sub && sub.Language ? sub.Language : null) });
+            // Tekst-undertekster (eller slå fra) kan skiftes uden genstart, medmindre de nuværende er brændt ind.
+            if (!session.burnIn && (index === -1 || isTextSub(sub))) {
+                session.subIndex = index;
+                applySubtitles();
+                progress('SubtitleTrackChange');
+            } else {
+                restartWith({ audioIndex: session.audioIndex, subIndex: index });
+            }
+        }
     }
 
     // ---------- Styring ----------
@@ -270,6 +538,17 @@ var Player = (function () {
     }
 
     function onKey(k) {
+        if (menuOpen) {
+            switch (k) {
+                case 37: Nav.move('left'); return true;
+                case 39: Nav.move('right'); return true;
+                case 38: Nav.move('up'); return true;
+                case 40: Nav.move('down'); return true;
+                case 13: if (Nav.current) chooseTrack(Nav.current); return true;
+                case 10009: case 27: case 8: closeMenu(); return true;
+            }
+            return true;
+        }
         switch (k) {
             case 13: case 10252: togglePause(); return true;           // OK, Play/Pause
             case 415: togglePause('play'); return true;                // Play
@@ -278,7 +557,8 @@ var Player = (function () {
             case 39: seekBy(10000); return true;
             case 412: seekBy(-30000); return true;                      // Spol tilbage
             case 417: seekBy(30000); return true;                       // Spol frem
-            case 38: case 40: showUi(); return true;
+            case 38: openMenu(); return true;                           // Op: lyd/undertekster
+            case 40: showUi(); return true;
             case 10009: case 27: case 8: case 413: stop(); return true; // Tilbage / Stop
         }
         return false;
@@ -289,12 +569,18 @@ var Player = (function () {
     });
     window.addEventListener('beforeunload', function () { if (active) stop(); });
 
-    document.addEventListener('DOMContentLoaded', function () {
-        el = {
-            ui: $('player-ui'), title: $('pu-title'), sub: $('pu-sub'), fill: $('pu-fill'), seek: $('pu-seek'),
-            time: $('pu-time'), dur: $('pu-dur'), state: $('pu-state'), spinner: $('pu-spinner')
-        };
+    // Klik i spor-menuen (browser-test)
+    document.addEventListener('click', function (e) {
+        if (!menuOpen) return;
+        var node = e.target.closest ? e.target.closest('.tm-item') : null;
+        if (node) chooseTrack(node);
     });
+
+    el = {
+        ui: $('player-ui'), title: $('pu-title'), sub: $('pu-sub'), fill: $('pu-fill'), seek: $('pu-seek'),
+        time: $('pu-time'), dur: $('pu-dur'), state: $('pu-state'), spinner: $('pu-spinner'), hint: $('pu-hint'),
+        menu: $('track-menu')
+    };
 
     return {
         start: start, stop: stop, onKey: onKey, fmt: fmt,

@@ -3,6 +3,7 @@
 - **Quick Connect**-login (ingen tastatur nødvendigt)
 - **Fortsæt med at se** / **Næste afsnit** / biblioteker
 - Afspiller med Samsungs AVPlay (direkte afspilning af mkv/mp4/HEVC m.m., ellers omkoder serveren til HLS)
+- Infoside med kapitler, lyd/undertekst-valg, automatisk næste afsnit, søgning, sortering og 5 sprog – se [CHANGELOG.md](CHANGELOG.md)
 - **Husker hvor du er nået til** – positionen gemmes på Jellyfin-serveren (hvert 10. sek, ved pause, spol og stop), så den også passer med telefonen osv.
 
 ## Installation fra en Linux-server (via GitHub)
@@ -40,7 +41,7 @@ Opdatering = kør scriptet igen.
 
 | Tast | Menu | Afspiller |
 |---|---|---|
-| Pile | Flyt fokus | ◀ ▶ spol 10 sek |
+| Pile | Flyt fokus | ◀ ▶ spol 10 sek, ▲ lyd og undertekster |
 | OK | Vælg | Pause/afspil |
 | Tilbage | Tilbage / afslut | Stop (gemmer position) |
 | ⏪ ⏩ | | Spol 30 sek |

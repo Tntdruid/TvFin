@@ -12,11 +12,11 @@ var App = (function () {
 
     var toastTimer;
     function toast(msg) {
-        var t = document.getElementById('toast');
-        t.textContent = msg;
-        t.classList.remove('hidden');
+        var box = document.getElementById('toast');
+        box.textContent = msg;
+        box.classList.remove('hidden');
         clearTimeout(toastTimer);
-        toastTimer = setTimeout(function () { t.classList.add('hidden'); }, 5000);
+        toastTimer = setTimeout(function () { box.classList.add('hidden'); }, 5000);
     }
 
     // ---------- Router ----------
@@ -43,8 +43,8 @@ var App = (function () {
         var entry = stack[stack.length - 1];
         var token = {};
         render.token = token;
-        screen = Screens[entry.name](entry.params);
-        root.innerHTML = '<div class="loading">Indlæser…</div>';
+        screen = Screens[entry.name](entry.params, entry);
+        root.innerHTML = '<div class="loading">' + esc(t('loading')) + '</div>';
         try {
             var html = await screen.render();
             if (render.token !== token) return;
@@ -56,9 +56,9 @@ var App = (function () {
         } catch (e) {
             if (render.token !== token) return;
             if (e.status === 401) { Api.state.token = null; go('login', {}, true); return; }
-            root.innerHTML = '<div class="center-box"><h1>Noget gik galt</h1><p class="muted">' + esc(e.message || e) +
-                '</p><div class="btn focusable" data-action="retry" data-key="retry">Prøv igen</div>' +
-                '<div class="btn focusable" data-action="server" data-key="server">Skift server</div></div>';
+            root.innerHTML = '<div class="center-box"><h1>' + esc(t('error_title')) + '</h1><p class="muted">' + esc(e.message || e) +
+                '</p><div class="btn focusable" data-action="retry" data-key="retry">' + esc(t('retry')) + '</div>' +
+                '<div class="btn focusable" data-action="server" data-key="server">' + esc(t('change_server')) + '</div></div>';
             Nav.setScope(root);
             Nav.focusFirst();
             screen = {
@@ -68,9 +68,9 @@ var App = (function () {
     }
 
     // ---------- Dialog ----------
-    function openDialog(html, onAction) {
+    function openDialog(html, onAction, onClose) {
         closeDialog();
-        dialog = { prevFocus: Nav.current, onAction: onAction, el: document.createElement('div') };
+        dialog = { prevFocus: Nav.current, onAction: onAction, onClose: onClose, el: document.createElement('div') };
         dialog.el.className = 'dialog-backdrop';
         dialog.el.innerHTML = '<div class="dialog">' + html + '</div>';
         document.body.appendChild(dialog.el);
@@ -82,6 +82,7 @@ var App = (function () {
         var d = dialog;
         dialog = null;
         d.el.parentNode.removeChild(d.el);
+        if (d.onClose) d.onClose();
         Nav.setScope(root);
         if (d.prevFocus && root.contains(d.prevFocus)) Nav.focus(d.prevFocus); else Nav.focusFirst();
     }
@@ -136,12 +137,12 @@ var App = (function () {
     function runtimeText(ticks) {
         var min = Math.round(ticks / 600000000);
         var h = Math.floor(min / 60);
-        return h ? h + 't ' + (min % 60) + 'm' : min + 'm';
+        return h ? t('runtime_hm', { h: h, m: min % 60 }) : t('runtime_m', { m: min });
     }
 
     function clock(d) {
         var m = d.getMinutes();
-        return d.getHours() + '.' + (m < 10 ? '0' : '') + m;
+        return d.getHours() + t('time_sep') + (m < 10 ? '0' : '') + m;
     }
 
     function streamLines(it) {
@@ -154,16 +155,59 @@ var App = (function () {
             else if (s.Type === 'Subtitle') subs.push(s.Language || s.DisplayTitle || '?');
         });
         var lines = [];
-        if (video) lines.push(['Video', video.DisplayTitle || ((video.Height ? video.Height + 'p ' : '') + (video.Codec || '').toUpperCase())]);
-        if (audio) lines.push(['Lyd', audio.DisplayTitle || audio.Codec]);
-        if (subs.length) lines.push(['Undertekster', subs.join(', ')]);
+        if (video) lines.push([t('video'), video.DisplayTitle || ((video.Height ? video.Height + 'p ' : '') + (video.Codec || '').toUpperCase())]);
+        if (audio) lines.push([t('audio'), audio.DisplayTitle || audio.Codec]);
+        if (subs.length) lines.push([t('subtitles'), subs.join(', ')]);
         return lines;
     }
 
     function play(it, ticks) {
         var entry = stack[stack.length - 1];
         if (entry && Nav.current) entry.focusKey = Nav.current.getAttribute('data-key');
-        Player.start(it, ticks, function () { render(); });
+        Player.start(it, ticks, function (last, ended) {
+            if (ended && last && last.Type === 'Episode') upNext(last);
+            else render();
+        });
+    }
+
+    // Efter et afsnit: vis "Næste afsnit om 10 sek" og start det automatisk.
+    async function upNext(last) {
+        await render();
+        var next = null;
+        try { next = await Api.nextEpisode(last); } catch (e) { /* ingen */ }
+        if (!next || Player.active) return;
+        var n = 10, timer = null;
+        var img = Api.imageUrls(next, true, 300);
+        openDialog(
+            '<div class="upnext-label">' + esc(t('up_next')) + '</div>' +
+            '<div class="upnext-img">' + (img.length ? '<img class="poster-img" src="' + esc(img[0]) + '" data-alt="' + esc(img.slice(1).join('|')) + '" onerror="App.imgErr(this)" alt="">' : '') + '</div>' +
+            '<h2>' + esc('S' + (next.ParentIndexNumber || 0) + ':E' + (next.IndexNumber || 0) + ' · ' + next.Name) + '</h2>' +
+            '<p class="muted" id="upnext-count">' + esc(t('starts_in', { n: n })) + '</p>' +
+            '<div class="btn primary focusable" data-action="now">▶ ' + esc(t('play_now')) + '</div>' +
+            '<div class="btn focusable" data-action="cancel">' + esc(t('cancel')) + '</div>',
+            function (a) {
+                closeDialog();
+                if (a === 'now') startNext();
+            },
+            function () { clearInterval(timer); });
+        timer = setInterval(function () {
+            n--;
+            var c = document.getElementById('upnext-count');
+            if (c) c.textContent = t('starts_in', { n: n });
+            if (n <= 0) { closeDialog(); startNext(); }
+        }, 1000);
+
+        async function startNext() {
+            try {
+                var full = await Api.item(next.Id);
+                var entry = stack[stack.length - 1];
+                if (entry && entry.name === 'detail') { entry.params.item = full; entry.focusKey = null; }
+                var pos = full.UserData && full.UserData.PlaybackPositionTicks;
+                play(full, pos > 0 ? pos : 0);
+            } catch (e) {
+                toast(t('error', { e: e.message || e }));
+            }
+        }
     }
 
     // ---------- Skærme ----------
@@ -176,17 +220,19 @@ var App = (function () {
                 var prev = Api.state.server ? Api.state.server.replace(/^https?:\/\//, '') : '';
                 return '<div class="center-box">' +
                     '<div class="logo big">TvFin</div>' +
-                    '<h1>Forbind til din Jellyfin-server</h1>' +
-                    '<p class="muted">Indtast IP-adresse eller adresse, f.eks. <b>192.168.1.20</b> eller <b>jellyfin.mitdomæne.dk</b></p>' +
+                    '<h1>' + esc(t('connect_title')) + '</h1>' +
+                    '<p class="muted">' + esc(t('connect_hint')) + '</p>' +
                     '<input id="server-input" class="input focusable" data-key="input" data-submit="connect" type="text" value="' + esc(prev) + '" placeholder="192.168.1.20" autocomplete="off">' +
-                    '<div class="btn focusable primary" data-action="connect" data-key="connect">Forbind</div>' +
+                    '<div class="btn focusable primary" data-action="connect" data-key="connect">' + esc(t('connect')) + '</div>' +
+                    '<div class="btn focusable" data-action="lang" data-key="lang">🌐 ' + esc(I18n.name) + '</div>' +
                     '<p class="error" id="server-error"></p></div>';
             },
             action: async function (a) {
+                if (a === 'lang') { switchLanguage(); return; }
                 if (a !== 'connect') return;
                 var input = document.getElementById('server-input');
                 var err = document.getElementById('server-error');
-                err.textContent = 'Forbinder…';
+                err.textContent = t('connecting');
                 try {
                     await Api.connect(input.value);
                     go('login', {}, true);
@@ -214,9 +260,7 @@ var App = (function () {
                 pollTimer = setInterval(check, 3000);
             } catch (e) {
                 codeEl.textContent = '—';
-                msg.textContent = e.status === 401 || e.status === 403
-                    ? 'Quick Connect er slået fra på serveren. Slå det til under Kontrolpanel → Generelt → "Aktivér Quick Connect".'
-                    : 'Kunne ikke hente kode: ' + e.message;
+                msg.textContent = e.status === 401 || e.status === 403 ? t('qc_disabled') : t('qc_error', { e: e.message });
             }
         }
         async function check() {
@@ -238,19 +282,21 @@ var App = (function () {
             render: function () {
                 return '<div class="center-box">' +
                     '<div class="logo big">TvFin</div>' +
-                    '<h1>Log ind med Quick Connect</h1>' +
-                    '<p class="muted">Åbn Jellyfin på din telefon eller computer → <b>Profil</b> → <b>Quick Connect</b> og indtast koden:</p>' +
+                    '<h1>' + esc(t('qc_title')) + '</h1>' +
+                    '<p class="muted">' + esc(t('qc_hint')) + '</p>' +
                     '<div class="qc-code" id="qc-code">······</div>' +
-                    '<p class="muted small">Server: ' + esc(Api.state.serverName || Api.state.server) + '</p>' +
+                    '<p class="muted small">' + esc(t('server')) + ': ' + esc(Api.state.serverName || Api.state.server) + '</p>' +
                     '<p class="error" id="qc-msg"></p>' +
-                    '<div class="btn-row"><div class="btn focusable" data-action="newcode" data-key="newcode">Ny kode</div>' +
-                    '<div class="btn focusable" data-action="server" data-key="server">Skift server</div></div></div>';
+                    '<div class="btn-row"><div class="btn focusable" data-action="newcode" data-key="newcode">' + esc(t('new_code')) + '</div>' +
+                    '<div class="btn focusable" data-action="server" data-key="server">' + esc(t('change_server')) + '</div>' +
+                    '<div class="btn focusable" data-action="lang" data-key="lang">🌐 ' + esc(I18n.name) + '</div></div></div>';
             },
             mounted: startQc,
             destroy: function () { alive = false; stopPoll(); },
             action: function (a) {
                 if (a === 'newcode') startQc();
                 if (a === 'server') go('server', {}, true);
+                if (a === 'lang') switchLanguage();
             }
         };
     };
@@ -270,16 +316,18 @@ var App = (function () {
                 resume.forEach(function (it) { resumeIds[it.Id] = true; });
                 var next = keep((res[1].Items || []).filter(function (it) { return !resumeIds[it.Id]; }));
                 var libs = keep((res[2].Items || []).filter(function (v) {
-                    var t = v.CollectionType;
-                    return !t || t === 'movies' || t === 'tvshows' || t === 'homevideos' || t === 'musicvideos' || t === 'boxsets' || t === 'folders';
+                    var ct = v.CollectionType;
+                    return !ct || ct === 'movies' || ct === 'tvshows' || ct === 'homevideos' || ct === 'musicvideos' || ct === 'boxsets' || ct === 'folders';
                 }));
                 var html = '<div class="screen" data-scroll="y"><header class="topbar"><div class="logo">TvFin</div>' +
                     '<div class="who">' + esc(Api.state.userName || '') + ' · ' + esc(Api.state.serverName || '') + '</div>' +
-                    '<div class="btn small focusable" data-action="logout" data-key="logout">Log ud</div></header>';
-                html += row('Fortsæt med at se', resume, true, 'resume');
-                html += row('Næste afsnit', next, true, 'next');
-                html += row('Biblioteker', libs, true, 'lib');
-                if (!resume.length && !next.length && !libs.length) html += '<p class="muted pad">Ingen biblioteker fundet.</p>';
+                    '<div class="btn small focusable" data-action="search" data-key="search">🔍 ' + esc(t('search')) + '</div>' +
+                    '<div class="btn small focusable" data-action="lang" data-key="lang">🌐 ' + esc(I18n.name) + '</div>' +
+                    '<div class="btn small focusable" data-action="logout" data-key="logout">' + esc(t('logout')) + '</div></header>';
+                html += row(t('continue_watching'), resume, true, 'resume');
+                html += row(t('next_up'), next, true, 'next');
+                html += row(t('libraries'), libs, true, 'lib');
+                if (!resume.length && !next.length && !libs.length) html += '<p class="muted pad">' + esc(t('no_libraries')) + '</p>';
                 return html + '</div>';
             },
             initialFocus: '.row .card',
@@ -288,6 +336,10 @@ var App = (function () {
                     await Api.logout();
                     stack = [];
                     go('login');
+                } else if (a === 'search') {
+                    go('search', { q: '' });
+                } else if (a === 'lang') {
+                    switchLanguage();
                 } else if (a === 'item') {
                     openItem(items[el.getAttribute('data-id')]);
                 }
@@ -295,25 +347,55 @@ var App = (function () {
         };
     };
 
+    // Sortering huskes pr. mappe
+    var SORT_KEY = 'tvfin-sort';
+    var SORT_ORDER = ['name', 'added', 'released', 'rating', 'played', 'random'];
+    function loadSorts() { try { return JSON.parse(localStorage.getItem(SORT_KEY) || '{}'); } catch (e) { return {}; } }
+    function getSort(id) { return loadSorts()[id] || { key: 'name', desc: false }; }
+    function setSort(id, s) {
+        var all = loadSorts();
+        all[id] = s;
+        try { localStorage.setItem(SORT_KEY, JSON.stringify(all)); } catch (e) { /* ignorer */ }
+    }
+
     Screens.library = function (params) {
         var parent = params.item, items = {};
+        var sortable = parent.Type !== 'Series' && parent.Type !== 'Season';
         return {
             render: async function () {
-                var r = await Api.children(parent);
+                var sort = sortable ? getSort(parent.Id) : null;
+                var r = await Api.children(parent, sort);
                 var list = r.Items || [];
                 list.forEach(function (it) { items[it.Id] = it; });
                 var head = parent.SeriesName ? parent.SeriesName + ' – ' + parent.Name : parent.Name;
-                var html = '<div class="screen" data-scroll="y"><header class="topbar"><div class="logo">TvFin</div><div class="who">' + esc(head) + '</div></header>';
+                var html = '<div class="screen" data-scroll="y"><header class="topbar"><div class="logo">TvFin</div><div class="who">' + esc(head) + '</div>';
+                if (sortable) {
+                    html += '<div class="btn small focusable" data-action="sort" data-key="sort">⇅ ' + esc(t('sort')) + ': ' + esc(t('sort_' + sort.key)) + '</div>';
+                    if (sort.key !== 'random') {
+                        html += '<div class="btn small focusable" data-action="order" data-key="order">' + (sort.desc ? '↓ ' + esc(t('descending')) : '↑ ' + esc(t('ascending'))) + '</div>';
+                    }
+                }
+                html += '</header>';
                 if (parent.Overview && (parent.Type === 'Series' || parent.Type === 'Season')) {
                     html += '<p class="overview">' + esc(parent.Overview) + '</p>';
                 }
                 html += '<div class="grid">' + list.map(function (it) { return card(it, isWide(it), 'lib'); }).join('') + '</div>';
-                if (!list.length) html += '<p class="muted pad">Tom.</p>';
+                if (!list.length) html += '<p class="muted pad">' + esc(t('empty')) + '</p>';
                 return html + '</div>';
             },
             initialFocus: '.grid .card',
             action: function (a, el) {
                 if (a === 'item') openItem(items[el.getAttribute('data-id')]);
+                else if (a === 'sort') {
+                    var cur = getSort(parent.Id);
+                    var key = SORT_ORDER[(SORT_ORDER.indexOf(cur.key) + 1) % SORT_ORDER.length];
+                    setSort(parent.Id, { key: key, desc: Api.SORTS[key].desc });
+                    refresh();
+                } else if (a === 'order') {
+                    var s = getSort(parent.Id);
+                    setSort(parent.Id, { key: s.key, desc: !s.desc });
+                    refresh();
+                }
             }
         };
     };
@@ -335,7 +417,7 @@ var App = (function () {
                 if (it.ProductionYear) meta.push(it.ProductionYear);
                 if (it.RunTimeTicks) {
                     meta.push(runtimeText(it.RunTimeTicks));
-                    meta.push('Slutter ' + clock(new Date(Date.now() + (it.RunTimeTicks - pos) / 10000)));
+                    meta.push(t('ends_at', { t: '' }) + clock(new Date(Date.now() + (it.RunTimeTicks - pos) / 10000)));
                 }
                 if (it.OfficialRating) meta.push(it.OfficialRating);
                 if (it.CommunityRating) meta.push('★ ' + it.CommunityRating.toFixed(1));
@@ -358,11 +440,11 @@ var App = (function () {
                     '<div class="detail-meta">' + meta.map(esc).join('<span class="dot">·</span>') + '</div>' +
                     '<div class="detail-actions">' +
                     (pos > 0
-                        ? '<div class="btn primary focusable" data-action="play" data-key="play">▶ Fortsæt fra ' + Player.fmt(pos / 10000) + '</div>' +
-                          '<div class="btn focusable" data-action="restart" data-key="restart">↺ Start forfra</div>'
-                        : '<div class="btn primary focusable" data-action="play" data-key="play">▶ Afspil</div>') +
-                    '<div class="btn icon focusable' + (ud.Played ? ' on' : '') + '" data-action="played" data-key="played">✓<span class="tip">' + (ud.Played ? 'Set' : 'Marker som set') + '</span></div>' +
-                    '<div class="btn icon focusable' + (ud.IsFavorite ? ' on' : '') + '" data-action="fav" data-key="fav">' + (ud.IsFavorite ? '♥' : '♡') + '<span class="tip">Favorit</span></div>' +
+                        ? '<div class="btn primary focusable" data-action="play" data-key="play">▶ ' + esc(t('resume_from', { t: Player.fmt(pos / 10000) })) + '</div>' +
+                          '<div class="btn focusable" data-action="restart" data-key="restart">↺ ' + esc(t('restart')) + '</div>'
+                        : '<div class="btn primary focusable" data-action="play" data-key="play">▶ ' + esc(t('play')) + '</div>') +
+                    '<div class="btn icon focusable' + (ud.Played ? ' on' : '') + '" data-action="played" data-key="played">✓<span class="tip">' + esc(ud.Played ? t('played') : t('mark_played')) + '</span></div>' +
+                    '<div class="btn icon focusable' + (ud.IsFavorite ? ' on' : '') + '" data-action="fav" data-key="fav">' + (ud.IsFavorite ? '♥' : '♡') + '<span class="tip">' + esc(t('favorite')) + '</span></div>' +
                     '</div></div></div>';
 
                 // Detaljer
@@ -378,10 +460,10 @@ var App = (function () {
                         .replace(/\n/g, '<br>') + '</div>';
                 }
                 var extra = [];
-                if (it.Studios && it.Studios.length) extra.push(['Studio', it.Studios.map(function (s) { return s.Name; }).join(', ')]);
-                if (it.Genres && it.Genres.length) extra.push(['Genre', it.Genres.join(', ')]);
+                if (it.Studios && it.Studios.length) extra.push([t('studio'), it.Studios.map(function (s) { return s.Name; }).join(', ')]);
+                if (it.Genres && it.Genres.length) extra.push([t('genre'), it.Genres.join(', ')]);
                 var directors = (it.People || []).filter(function (p) { return p.Type === 'Director'; }).map(function (p) { return p.Name; });
-                if (directors.length) extra.push(['Instruktør', directors.join(', ')]);
+                if (directors.length) extra.push([t('director'), directors.join(', ')]);
                 if (extra.length) {
                     html += '<table class="detail-table">' + extra.map(function (l) {
                         return '<tr><td>' + esc(l[0]) + '</td><td><b>' + esc(l[1]) + '</b></td></tr>';
@@ -392,13 +474,14 @@ var App = (function () {
                 // Kapitler / scener
                 var chapters = it.Chapters || [];
                 if (chapters.length) {
-                    html += '<section class="row"><h2>Scener</h2><div class="row-items" data-scroll="x">' +
+                    html += '<section class="row"><h2>' + esc(t('scenes')) + '</h2><div class="row-items" data-scroll="x">' +
                         chapters.map(function (c, i) {
                             var img = c.ImageTag ? Api.chapterImageUrl(it, i, c.ImageTag, 240) : null;
+                            var name = c.Name || t('chapter', { n: i + 1 });
                             return '<div class="card wide chapter focusable" data-action="chapter" data-index="' + i + '" data-key="ch-' + i + '">' +
-                                '<div class="poster"><span class="poster-fallback">' + esc(c.Name || ('Kapitel ' + (i + 1))) + '</span>' +
+                                '<div class="poster"><span class="poster-fallback">' + esc(name) + '</span>' +
                                 (img ? '<img class="poster-img" src="' + esc(img) + '" onerror="App.imgErr(this)" alt="">' : '') +
-                                '<div class="chapter-label"><b>' + esc(c.Name || ('Kapitel ' + (i + 1))) + '</b><br>' +
+                                '<div class="chapter-label"><b>' + esc(name) + '</b><br>' +
                                 Player.fmt(c.StartPositionTicks / 10000) + '</div></div></div>';
                         }).join('') + '</div></section>';
                 }
@@ -413,11 +496,78 @@ var App = (function () {
                     else if (a === 'played') { await Api.setPlayed(it.Id, !ud.Played); refresh(); }
                     else if (a === 'fav') { await Api.setFavorite(it.Id, !ud.IsFavorite); refresh(); }
                 } catch (e) {
-                    toast('Fejl: ' + (e.message || e));
+                    toast(t('error', { e: e.message || e }));
                 }
             }
         };
     };
+
+    Screens.search = function (params, entry) {
+        var items = {}, timer = null, lastQ = null, reqId = 0;
+        async function run(q) {
+            q = (q || '').trim();
+            params.q = q;
+            if (q === lastQ) return;
+            lastQ = q;
+            var box = document.getElementById('search-results');
+            if (!box) return;
+            if (q.length < 2) { box.innerHTML = ''; return; }
+            var my = ++reqId;
+            try {
+                var r = await Api.search(q);
+                if (my !== reqId || !document.getElementById('search-results')) return;
+                var list = r.Items || [];
+                list.forEach(function (it) { items[it.Id] = it; });
+                box.innerHTML = list.length
+                    ? '<div class="grid">' + list.map(function (it) { return card(it, isWide(it), 'search'); }).join('') + '</div>'
+                    : '<p class="muted pad">' + esc(t('no_results')) + '</p>';
+                // Tilbage fra en detaljeside: genskab fokus på det valgte kort
+                if (entry.focusKey) {
+                    var target = box.querySelector('[data-key="' + entry.focusKey + '"]');
+                    if (target) Nav.focus(target);
+                    entry.focusKey = null;
+                }
+            } catch (e) {
+                box.innerHTML = '<p class="error pad">' + esc(t('error', { e: e.message || e })) + '</p>';
+            }
+        }
+        return {
+            initialFocus: '#search-input',
+            render: function () {
+                return '<div class="screen" data-scroll="y"><header class="topbar"><div class="logo">TvFin</div><div class="who">' + esc(t('search')) + '</div></header>' +
+                    '<div class="search-box"><input id="search-input" class="input focusable" data-key="search-input" data-submit="search" type="text" autocomplete="off" placeholder="' +
+                    esc(t('search_placeholder')) + '" value="' + esc(params.q || '') + '"></div>' +
+                    '<div class="search-hint">' + esc(t('search_hint')) + '</div>' +
+                    '<div id="search-results"></div></div>';
+            },
+            mounted: function () {
+                var input = document.getElementById('search-input');
+                input.addEventListener('input', function () {
+                    clearTimeout(timer);
+                    timer = setTimeout(function () { run(input.value); }, 500);
+                });
+                if (params.q) run(params.q);
+            },
+            destroy: function () { clearTimeout(timer); },
+            action: function (a, el) {
+                if (a === 'search') {
+                    run(document.getElementById('search-input').value);
+                    // Efter "Færdig" på tastaturet: hop ned til første resultat
+                    setTimeout(function () {
+                        var first = document.querySelector('#search-results .card');
+                        if (first) Nav.focus(first);
+                    }, 600);
+                } else if (a === 'item') {
+                    openItem(items[el.getAttribute('data-id')]);
+                }
+            }
+        };
+    };
+
+    function switchLanguage() {
+        I18n.next();
+        refresh();
+    }
 
     // ---------- Taster ----------
     var KEYS = { LEFT: 37, UP: 38, RIGHT: 39, DOWN: 40, ENTER: 13, BACK: 10009, ESC: 27, BACKSPACE: 8, DONE: 65376, CANCEL: 65385 };
@@ -483,6 +633,7 @@ var App = (function () {
 
     async function init() {
         registerTvKeys();
+        I18n.detectTv(function () { if (stack.length && !Player.active) refresh(); });
         if (!Api.state.server) { go('server'); return; }
         if (!Api.state.token) { go('login'); return; }
         try {

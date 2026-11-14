@@ -1,11 +1,12 @@
 /* Jellyfin API-klient. Skrevet uden ?. og ?? så den kører på ældre Tizen-TV'er. */
 var Api = (function () {
     var CLIENT = 'TvFin';
-    var VERSION = '1.0.0';
+    var VERSION = '1.2.0';
     var STORE_KEY = 'tvfin';
     var isTizen = !!window.tizen;
 
-    var state = { server: null, token: null, userId: null, userName: null, serverName: null, deviceId: null };
+    // prefs: { audioLang, subLang } – sidst valgte sprog for lyd/undertekster ('off' = ingen undertekster)
+    var state = { server: null, token: null, userId: null, userName: null, serverName: null, deviceId: null, prefs: {} };
 
     function load() {
         try {
@@ -94,7 +95,7 @@ var Api = (function () {
                 }
             } catch (e) { /* prøv næste */ }
         }
-        throw new Error('Kunne ikke finde en Jellyfin-server på "' + input + '"');
+        throw new Error(t('server_not_found', { s: input }));
     }
 
     // ---- Quick Connect ----
@@ -145,13 +146,48 @@ var Api = (function () {
     function views() {
         return firstOk('GET', ['/UserViews?userId=' + state.userId, '/Users/' + state.userId + '/Views']);
     }
-    function children(parent) {
+    // Sortering: nøgle -> Jellyfin SortBy og standard-retning
+    var SORTS = {
+        name: { by: 'SortName', desc: false },
+        added: { by: 'DateCreated,SortName', desc: true },
+        released: { by: 'PremiereDate,ProductionYear,SortName', desc: true },
+        rating: { by: 'CommunityRating,SortName', desc: true },
+        played: { by: 'DatePlayed,SortName', desc: true },
+        random: { by: 'Random', desc: false }
+    };
+
+    // sort: { key, desc } – udelades for afsnit/sæsoner, der altid står i rækkefølge
+    function children(parent, sort) {
         var q = 'ParentId=' + parent.Id + '&Limit=1000&' + FIELDS;
-        if (parent.CollectionType === 'movies') q += '&Recursive=true&IncludeItemTypes=Movie&SortBy=SortName';
-        else if (parent.CollectionType === 'tvshows') q += '&Recursive=true&IncludeItemTypes=Series&SortBy=SortName';
+        var s = sort && SORTS[sort.key];
+        var sortQ = s ? '&SortBy=' + s.by + '&SortOrder=' + (sort.desc ? 'Descending' : 'Ascending') : '&SortBy=SortName';
+        if (parent.CollectionType === 'movies') q += '&Recursive=true&IncludeItemTypes=Movie' + sortQ;
+        else if (parent.CollectionType === 'tvshows') q += '&Recursive=true&IncludeItemTypes=Series' + sortQ;
+        else if (s) q += sortQ;
         else q += '&SortBy=ParentIndexNumber,IndexNumber,SortName';
         return firstOk('GET', ['/Items?userId=' + state.userId + '&' + q, '/Users/' + state.userId + '/Items?' + q]);
     }
+    function search(term) {
+        var q = 'searchTerm=' + encodeURIComponent(term) + '&Recursive=true&IncludeItemTypes=Movie,Series,Episode,Video,MusicVideo&Limit=60&' + FIELDS;
+        return firstOk('GET', ['/Items?userId=' + state.userId + '&' + q, '/Users/' + state.userId + '/Items?' + q]);
+    }
+    async function nextEpisode(ep) {
+        if (!ep.SeriesId) return null;
+        var r = await request('GET', '/Shows/' + ep.SeriesId + '/Episodes?userId=' + state.userId +
+            '&StartItemId=' + ep.Id + '&Limit=2&' + FIELDS);
+        var list = (r && r.Items) || [];
+        if (list.length > 1 && list[0].Id === ep.Id) return list[1];
+        return null;
+    }
+    function subtitleUrl(itemId, mediaSourceId, index) {
+        return state.server + '/Videos/' + itemId + '/' + mediaSourceId + '/Subtitles/' + index + '/0/Stream.vtt?api_key=' + state.token;
+    }
+    function savePrefs(p) {
+        state.prefs = state.prefs || {};
+        for (var k in p) if (p.hasOwnProperty(k)) state.prefs[k] = p[k];
+        save();
+    }
+
     function item(id) {
         return firstOk('GET', ['/Items/' + id + '?userId=' + state.userId, '/Users/' + state.userId + '/Items/' + id]);
     }
@@ -233,7 +269,7 @@ var Api = (function () {
                     VideoCodec: 'h264,hevc', AudioCodec: 'aac,ac3,eac3',
                     MaxAudioChannels: '6', MinSegments: 1, BreakOnNonKeyFrames: true
                 }],
-                ContainerProfiles: [], CodecProfiles: [], SubtitleProfiles: []
+                ContainerProfiles: [], CodecProfiles: [], SubtitleProfiles: SUBTITLE_PROFILES
             };
         }
         return {
@@ -247,17 +283,30 @@ var Api = (function () {
                 Type: 'Video', Container: 'ts', Protocol: 'hls', Context: 'Streaming',
                 VideoCodec: 'h264', AudioCodec: 'aac', MaxAudioChannels: '2', MinSegments: 1, BreakOnNonKeyFrames: true
             }],
-            ContainerProfiles: [], CodecProfiles: [], SubtitleProfiles: []
+            ContainerProfiles: [], CodecProfiles: [], SubtitleProfiles: SUBTITLE_PROFILES
         };
     }
 
-    async function playbackInfo(itemId) {
+    // Tekst-undertekster hentes som WebVTT og tegnes af appen selv (ingen omkodning).
+    // Billed-undertekster (PGS/DVD) brændes ind af serveren.
+    var SUBTITLE_PROFILES = ['vtt', 'webvtt', 'srt', 'subrip', 'ass', 'ssa', 'mov_text', 'ttml', 'sub', 'smi'].map(function (f) {
+        return { Format: f, Method: 'External' };
+    }).concat(['pgssub', 'pgs', 'dvdsub', 'dvbsub', 'vobsub'].map(function (f) {
+        return { Format: f, Method: 'Encode' };
+    }));
+
+    // opts: { audioIndex, subIndex, mediaSourceId, noDirectPlay }
+    async function playbackInfo(itemId, opts) {
+        opts = opts || {};
         var profile = deviceProfile();
-        var info = await request('POST', '/Items/' + itemId + '/PlaybackInfo?userId=' + state.userId +
-            '&IsPlayback=true&AutoOpenLiveStream=true&MaxStreamingBitrate=' + profile.MaxStreamingBitrate,
-            { DeviceProfile: profile });
+        var q = '?userId=' + state.userId + '&IsPlayback=true&AutoOpenLiveStream=true&MaxStreamingBitrate=' + profile.MaxStreamingBitrate;
+        if (opts.audioIndex !== undefined && opts.audioIndex !== null) q += '&AudioStreamIndex=' + opts.audioIndex;
+        if (opts.subIndex !== undefined && opts.subIndex !== null) q += '&SubtitleStreamIndex=' + opts.subIndex;
+        if (opts.mediaSourceId) q += '&MediaSourceId=' + opts.mediaSourceId;
+        if (opts.noDirectPlay) q += '&EnableDirectPlay=false';
+        var info = await request('POST', '/Items/' + itemId + '/PlaybackInfo' + q, { DeviceProfile: profile });
         var src = info.MediaSources && info.MediaSources[0];
-        if (!src) throw new Error('Ingen afspillelig kilde');
+        if (!src) throw new Error(t('no_source'));
         var url, method;
         if (src.SupportsDirectPlay) {
             method = 'DirectPlay';
@@ -268,9 +317,13 @@ var Api = (function () {
             url = state.server + src.TranscodingUrl;
             if (url.indexOf('api_key=') < 0 && url.indexOf('ApiKey=') < 0) url += '&api_key=' + state.token;
         } else {
-            throw new Error('Serveren kan ikke afspille denne fil');
+            throw new Error(t('cannot_play'));
         }
-        return { url: url, method: method, mediaSourceId: src.Id, playSessionId: info.PlaySessionId, runTimeTicks: src.RunTimeTicks };
+        return {
+            url: url, method: method, mediaSourceId: src.Id, playSessionId: info.PlaySessionId, runTimeTicks: src.RunTimeTicks,
+            streams: src.MediaStreams || [],
+            defaultAudio: src.DefaultAudioStreamIndex, defaultSub: src.DefaultSubtitleStreamIndex
+        };
     }
 
     function report(kind, data) {
@@ -289,7 +342,8 @@ var Api = (function () {
         state: state, isTizen: isTizen, connect: connect, logout: logout, validateSession: validateSession,
         qcInitiate: qcInitiate, qcCheck: qcCheck, qcAuthenticate: qcAuthenticate,
         resume: resume, nextUp: nextUp, views: views, children: children, item: item, imageUrls: imageUrls, chapterImageUrl: chapterImageUrl, backdropUrl: backdropUrl,
-        setPlayed: setPlayed, setFavorite: setFavorite,
+        setPlayed: setPlayed, setFavorite: setFavorite, search: search, nextEpisode: nextEpisode,
+        subtitleUrl: subtitleUrl, savePrefs: savePrefs, SORTS: SORTS,
         playbackInfo: playbackInfo, report: report, stopEncoding: stopEncoding
     };
 })();

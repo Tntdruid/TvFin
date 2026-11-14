@@ -54,12 +54,16 @@ var Nav = (function () {
             var r = el.getBoundingClientRect();
             var x = r.left + r.width / 2, y = r.top + r.height / 2;
             var dx = x - cx, dy = y - cy, score;
+            // Midtpunkter bruges, fordi det fokuserede element er forstørret (scale) og kan overlappe naboer.
             if (dir === 'right' || dir === 'left') {
-                if (dir === 'right' ? r.left < cr.right - 4 : r.right > cr.left + 4) return;
+                if (dir === 'right' ? dx <= 1 : dx >= -1) return;
                 score = Math.abs(dx) + Math.abs(dy) * 4;
             } else {
-                if (dir === 'down' ? r.top < cr.bottom - 4 : r.bottom > cr.top + 4) return;
-                score = Math.abs(dy) + Math.abs(dx) * 1.5;
+                if (dir === 'down' ? dy <= 1 : dy >= -1) return;
+                if (Math.abs(dy) < Math.min(cr.height, r.height) / 2) return; // samme række
+
+                // Brug venstrekant eller midte (det der passer bedst), så venstrestillede lister føles naturlige
+                score = Math.abs(dy) + Math.min(Math.abs(dx), Math.abs(r.left - cr.left)) * 1.5;
             }
             if (score < bestScore) { bestScore = score; best = el; }
         });
