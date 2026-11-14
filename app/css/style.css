@@ -185,6 +185,69 @@ body:not(.playing) #av-player { display: none; }
 .grid { padding: 20px 70px; }
 .overview { margin: 10px 80px 0; max-width: 1400px; color: var(--muted); font-size: 24px; line-height: 1.4; max-height: 136px; overflow: hidden; }
 
+/* ---------- Detaljeside ---------- */
+.detail-bg {
+    position: absolute; left: 0; top: 0; right: 0; height: 900px;
+    background: center top / cover no-repeat;
+    opacity: .22;
+}
+.detail-bg:after {
+    content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 500px;
+    background: linear-gradient(to bottom, rgba(15,16,22,0), var(--bg));
+}
+.detail-top {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 110px 80px 30px;
+}
+.detail-img {
+    position: relative;
+    flex: 0 0 auto;
+    width: 340px; height: 510px;
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--card);
+    box-shadow: 0 12px 40px rgba(0,0,0,.6);
+}
+.detail-img.wide { width: 640px; height: 360px; }
+.detail-info { flex: 1; margin-left: 60px; min-width: 0; }
+.detail-sup { font-size: 28px; color: var(--muted); margin-bottom: 6px; }
+.detail-info h1 { font-size: 52px; margin: 0 0 14px; line-height: 1.15; }
+.detail-meta { font-size: 28px; color: #cfd2de; }
+.detail-meta .dot { margin: 0 14px; color: var(--muted); }
+.detail-actions { margin-top: 30px; margin-left: -10px; }
+.detail-actions .btn { white-space: nowrap; }
+.btn.icon { position: relative; width: 84px; padding-left: 0; padding-right: 0; text-align: center; }
+.btn.icon .tip {
+    display: none;
+    position: absolute; left: 50%; top: 100%; margin-top: 12px;
+    transform: translateX(-50%);
+    padding: 6px 14px; border-radius: 8px;
+    background: #000; color: #fff; font-size: 20px; font-weight: 400; white-space: nowrap;
+}
+.btn.icon.focused .tip { display: block; }
+.btn.icon.on { color: var(--accent2); }
+.btn.icon.on.focused { color: #111; }
+
+.detail-body { position: relative; padding: 10px 80px 0; max-width: 1760px; }
+.detail-table { border-collapse: collapse; margin: 10px 0 24px; font-size: 26px; }
+.detail-table td { padding: 6px 40px 6px 0; vertical-align: top; }
+.detail-table td:first-child { color: var(--muted); width: 200px; }
+.detail-overview {
+    font-size: 26px; line-height: 1.5; color: #dfe1ea;
+    max-height: 312px; overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.chapter-label {
+    position: absolute; left: 0; bottom: 0;
+    padding: 8px 14px;
+    font-size: 22px;
+    background: rgba(0,0,0,.65);
+    border-top-right-radius: 10px;
+}
+
 /* ---------- Dialog ---------- */
 .dialog-backdrop {
     position: fixed; left: 0; top: 0; right: 0; bottom: 0;

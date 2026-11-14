@@ -123,19 +123,41 @@ var App = (function () {
             go('library', { item: it });
             return;
         }
-        var pos = it.UserData && it.UserData.PlaybackPositionTicks;
-        if (pos > 0) {
-            openDialog(
-                '<h2>' + esc(it.SeriesName ? it.SeriesName + ' – ' + it.Name : it.Name) + '</h2>' +
-                '<div class="btn focusable" data-action="resume">▶ Fortsæt fra ' + Player.fmt(pos / 10000) + '</div>' +
-                '<div class="btn focusable" data-action="restart">↺ Start forfra</div>',
-                function (a) {
-                    closeDialog();
-                    play(it, a === 'resume' ? pos : 0);
-                });
-        } else {
-            play(it, 0);
-        }
+        go('detail', { item: it });
+    }
+
+    // Gem fokus og tegn den aktuelle skærm igen (fx efter "set"/favorit).
+    function refresh() {
+        var entry = stack[stack.length - 1];
+        if (entry && Nav.current) entry.focusKey = Nav.current.getAttribute('data-key');
+        render();
+    }
+
+    function runtimeText(ticks) {
+        var min = Math.round(ticks / 600000000);
+        var h = Math.floor(min / 60);
+        return h ? h + 't ' + (min % 60) + 'm' : min + 'm';
+    }
+
+    function clock(d) {
+        var m = d.getMinutes();
+        return d.getHours() + '.' + (m < 10 ? '0' : '') + m;
+    }
+
+    function streamLines(it) {
+        var src = it.MediaSources && it.MediaSources[0];
+        var streams = (src && src.MediaStreams) || it.MediaStreams || [];
+        var video = null, audio = null, subs = [];
+        streams.forEach(function (s) {
+            if (s.Type === 'Video' && !video) video = s;
+            else if (s.Type === 'Audio' && (!audio || s.IsDefault && !audio.IsDefault)) audio = s;
+            else if (s.Type === 'Subtitle') subs.push(s.Language || s.DisplayTitle || '?');
+        });
+        var lines = [];
+        if (video) lines.push(['Video', video.DisplayTitle || ((video.Height ? video.Height + 'p ' : '') + (video.Codec || '').toUpperCase())]);
+        if (audio) lines.push(['Lyd', audio.DisplayTitle || audio.Codec]);
+        if (subs.length) lines.push(['Undertekster', subs.join(', ')]);
+        return lines;
     }
 
     function play(it, ticks) {
@@ -292,6 +314,107 @@ var App = (function () {
             initialFocus: '.grid .card',
             action: function (a, el) {
                 if (a === 'item') openItem(items[el.getAttribute('data-id')]);
+            }
+        };
+    };
+
+    Screens.detail = function (params) {
+        var it = params.item;
+        return {
+            initialFocus: '[data-action="play"]',
+            render: async function () {
+                it = await Api.item(params.item.Id);
+                var ud = it.UserData || {};
+                var pos = ud.PlaybackPositionTicks || 0;
+                var wide = it.Type === 'Episode' || it.Type === 'Video' || it.PrimaryImageAspectRatio > 1.2;
+                var urls = Api.imageUrls(it, wide, 540);
+                var backdrop = Api.backdropUrl(it);
+
+                // Meta-linje: år · spilletid · slutter kl.
+                var meta = [];
+                if (it.ProductionYear) meta.push(it.ProductionYear);
+                if (it.RunTimeTicks) {
+                    meta.push(runtimeText(it.RunTimeTicks));
+                    meta.push('Slutter ' + clock(new Date(Date.now() + (it.RunTimeTicks - pos) / 10000)));
+                }
+                if (it.OfficialRating) meta.push(it.OfficialRating);
+                if (it.CommunityRating) meta.push('★ ' + it.CommunityRating.toFixed(1));
+
+                var title = it.Name;
+                var sup = '';
+                if (it.Type === 'Episode') {
+                    sup = (it.SeriesName || '') + ' · S' + (it.ParentIndexNumber || 0) + ':E' + (it.IndexNumber || 0);
+                }
+
+                var html = '<div class="screen detail" data-scroll="y">';
+                if (backdrop) html += '<div class="detail-bg" style="background-image:url(\'' + backdrop + '\')"></div>';
+                html += '<div class="detail-top">' +
+                    '<div class="detail-img' + (wide ? ' wide' : '') + '"><span class="poster-fallback">' + esc(it.Name) + '</span>' +
+                    (urls.length ? '<img class="poster-img" src="' + esc(urls[0]) + '" data-alt="' + esc(urls.slice(1).join('|')) + '" onerror="App.imgErr(this)" alt="">' : '') +
+                    (pos > 0 && it.RunTimeTicks ? '<div class="progress"><i style="width:' + Math.min(100, pos / it.RunTimeTicks * 100) + '%"></i></div>' : '') +
+                    '</div><div class="detail-info">' +
+                    (sup ? '<div class="detail-sup">' + esc(sup) + '</div>' : '') +
+                    '<h1>' + esc(title) + '</h1>' +
+                    '<div class="detail-meta">' + meta.map(esc).join('<span class="dot">·</span>') + '</div>' +
+                    '<div class="detail-actions">' +
+                    (pos > 0
+                        ? '<div class="btn primary focusable" data-action="play" data-key="play">▶ Fortsæt fra ' + Player.fmt(pos / 10000) + '</div>' +
+                          '<div class="btn focusable" data-action="restart" data-key="restart">↺ Start forfra</div>'
+                        : '<div class="btn primary focusable" data-action="play" data-key="play">▶ Afspil</div>') +
+                    '<div class="btn icon focusable' + (ud.Played ? ' on' : '') + '" data-action="played" data-key="played">✓<span class="tip">' + (ud.Played ? 'Set' : 'Marker som set') + '</span></div>' +
+                    '<div class="btn icon focusable' + (ud.IsFavorite ? ' on' : '') + '" data-action="fav" data-key="fav">' + (ud.IsFavorite ? '♥' : '♡') + '<span class="tip">Favorit</span></div>' +
+                    '</div></div></div>';
+
+                // Detaljer
+                html += '<div class="detail-body">';
+                var lines = streamLines(it);
+                if (lines.length) {
+                    html += '<table class="detail-table">' + lines.map(function (l) {
+                        return '<tr><td>' + esc(l[0]) + '</td><td>' + esc(l[1]) + '</td></tr>';
+                    }).join('') + '</table>';
+                }
+                if (it.Overview) {
+                    html += '<div class="detail-overview">' + esc(it.Overview.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, ''))
+                        .replace(/\n/g, '<br>') + '</div>';
+                }
+                var extra = [];
+                if (it.Studios && it.Studios.length) extra.push(['Studio', it.Studios.map(function (s) { return s.Name; }).join(', ')]);
+                if (it.Genres && it.Genres.length) extra.push(['Genre', it.Genres.join(', ')]);
+                var directors = (it.People || []).filter(function (p) { return p.Type === 'Director'; }).map(function (p) { return p.Name; });
+                if (directors.length) extra.push(['Instruktør', directors.join(', ')]);
+                if (extra.length) {
+                    html += '<table class="detail-table">' + extra.map(function (l) {
+                        return '<tr><td>' + esc(l[0]) + '</td><td><b>' + esc(l[1]) + '</b></td></tr>';
+                    }).join('') + '</table>';
+                }
+                html += '</div>';
+
+                // Kapitler / scener
+                var chapters = it.Chapters || [];
+                if (chapters.length) {
+                    html += '<section class="row"><h2>Scener</h2><div class="row-items" data-scroll="x">' +
+                        chapters.map(function (c, i) {
+                            var img = c.ImageTag ? Api.chapterImageUrl(it, i, c.ImageTag, 240) : null;
+                            return '<div class="card wide chapter focusable" data-action="chapter" data-index="' + i + '" data-key="ch-' + i + '">' +
+                                '<div class="poster"><span class="poster-fallback">' + esc(c.Name || ('Kapitel ' + (i + 1))) + '</span>' +
+                                (img ? '<img class="poster-img" src="' + esc(img) + '" onerror="App.imgErr(this)" alt="">' : '') +
+                                '<div class="chapter-label"><b>' + esc(c.Name || ('Kapitel ' + (i + 1))) + '</b><br>' +
+                                Player.fmt(c.StartPositionTicks / 10000) + '</div></div></div>';
+                        }).join('') + '</div></section>';
+                }
+                return html + '</div>';
+            },
+            action: async function (a, el) {
+                var ud = it.UserData || {};
+                try {
+                    if (a === 'play') play(it, ud.PlaybackPositionTicks || 0);
+                    else if (a === 'restart') play(it, 0);
+                    else if (a === 'chapter') play(it, it.Chapters[+el.getAttribute('data-index')].StartPositionTicks);
+                    else if (a === 'played') { await Api.setPlayed(it.Id, !ud.Played); refresh(); }
+                    else if (a === 'fav') { await Api.setFavorite(it.Id, !ud.IsFavorite); refresh(); }
+                } catch (e) {
+                    toast('Fejl: ' + (e.message || e));
+                }
             }
         };
     };

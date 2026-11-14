@@ -156,6 +156,29 @@ var Api = (function () {
         return firstOk('GET', ['/Items/' + id + '?userId=' + state.userId, '/Users/' + state.userId + '/Items/' + id]);
     }
 
+    function setPlayed(id, played) {
+        return firstOk(played ? 'POST' : 'DELETE',
+            ['/UserPlayedItems/' + id + '?userId=' + state.userId, '/Users/' + state.userId + '/PlayedItems/' + id]);
+    }
+    function setFavorite(id, fav) {
+        return firstOk(fav ? 'POST' : 'DELETE',
+            ['/UserFavoriteItems/' + id + '?userId=' + state.userId, '/Users/' + state.userId + '/FavoriteItems/' + id]);
+    }
+
+    function chapterImageUrl(it, index, tag, height) {
+        return state.server + '/Items/' + it.Id + '/Images/Chapter/' + index + '?fillHeight=' + (height || 240) +
+            '&quality=80' + (tag ? '&tag=' + tag : '') + '&api_key=' + state.token;
+    }
+    function backdropUrl(it) {
+        if (it.BackdropImageTags && it.BackdropImageTags.length) {
+            return state.server + '/Items/' + it.Id + '/Images/Backdrop/0?fillWidth=1920&quality=70&tag=' + it.BackdropImageTags[0] + '&api_key=' + state.token;
+        }
+        if (it.ParentBackdropItemId && it.ParentBackdropImageTags && it.ParentBackdropImageTags.length) {
+            return state.server + '/Items/' + it.ParentBackdropItemId + '/Images/Backdrop/0?fillWidth=1920&quality=70&tag=' + it.ParentBackdropImageTags[0] + '&api_key=' + state.token;
+        }
+        return null;
+    }
+
     // Returnerer en prioriteret liste af billed-URL'er. Appen prøver dem i rækkefølge (onerror -> næste),
     // så kort får et billede selv hvis serveren ikke sender ImageTags med.
     function imageUrls(it, wide, height) {
@@ -166,7 +189,7 @@ var Api = (function () {
         function add(id, type, tag) { if (id) c.push([id, type, tag]); }
 
         if (wide) {
-            if (it.Type === 'Episode') add(it.Id, 'Primary', tags.Primary);
+            if (it.Type === 'Episode' || it.Type === 'Video' || it.PrimaryImageAspectRatio > 1.2) add(it.Id, 'Primary', tags.Primary);
             if (tags.Thumb) add(it.Id, 'Thumb', tags.Thumb);
             if (it.ParentThumbItemId) add(it.ParentThumbItemId, 'Thumb', it.ParentThumbImageTag);
             if (backs.length) add(it.Id, 'Backdrop', backs[0]);
@@ -265,7 +288,8 @@ var Api = (function () {
     return {
         state: state, isTizen: isTizen, connect: connect, logout: logout, validateSession: validateSession,
         qcInitiate: qcInitiate, qcCheck: qcCheck, qcAuthenticate: qcAuthenticate,
-        resume: resume, nextUp: nextUp, views: views, children: children, item: item, imageUrls: imageUrls,
+        resume: resume, nextUp: nextUp, views: views, children: children, item: item, imageUrls: imageUrls, chapterImageUrl: chapterImageUrl, backdropUrl: backdropUrl,
+        setPlayed: setPlayed, setFavorite: setFavorite,
         playbackInfo: playbackInfo, report: report, stopEncoding: stopEncoding
     };
 })();
