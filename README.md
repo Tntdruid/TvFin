@@ -62,3 +62,13 @@ Open http://localhost:8080 – arrow keys, Enter and Backspace/Esc work like the
 - `app/js/i18n.js` – UI translations (da, en, de, sv, nb)
 - `scripts/tizen-install.sh` – runs inside the container: packages and installs
 - `scripts/make-icon.js` – generates `app/icon.png`
+
+## More Jellyfin projects
+
+| Project | What it does |
+|---|---|
+| [tonefin](https://github.com/Tntdruid/tonefin) | A small Windows music player for Jellyfin that always reports playback to the server |
+| [jellyfin-plugin-episode-title-fixer](https://github.com/Tntdruid/jellyfin-plugin-episode-title-fixer) | Jellyfin plugin that replaces placeholder episode titles like "Episode 11" with the original title |
+| [jellyfin-plugin-auto-artist-playlists](https://github.com/Tntdruid/jellyfin-plugin-auto-artist-playlists) | Jellyfin plugin that hearts songs you listen to and adds them to a private playlist per artist |
+| [jellyfin-video-stats](https://github.com/Tntdruid/jellyfin-video-stats) | Home Assistant add-on: viewing stats for movies, series and YouTube videos in Jellyfin |
+| [jellyfin-music-stats](https://github.com/Tntdruid/jellyfin-music-stats) | Home Assistant add-on: music listening stats for Jellyfin |

@@ -62,3 +62,13 @@ node scripts/serve.js
 - `app/js/i18n.js` – oversættelser (da, en, de, sv, nb)
 - `scripts/tizen-install.sh` – kører i containeren: pakker og installerer
 - `scripts/make-icon.js` – genererer `app/icon.png`
+
+## Flere Jellyfin-projekter
+
+| Projekt | Hvad det gør |
+|---|---|
+| [tonefin](https://github.com/Tntdruid/tonefin) | Lille musikafspiller til Windows, der altid rapporterer afspilning til Jellyfin-serveren |
+| [jellyfin-plugin-episode-title-fixer](https://github.com/Tntdruid/jellyfin-plugin-episode-title-fixer) | Jellyfin-plugin, der erstatter pladsholder-titler som "Afsnit 11" med den originale titel |
+| [jellyfin-plugin-auto-artist-playlists](https://github.com/Tntdruid/jellyfin-plugin-auto-artist-playlists) | Jellyfin-plugin, der hjerter sange du lytter til og lægger dem i en privat playliste pr. kunstner |
+| [jellyfin-video-stats](https://github.com/Tntdruid/jellyfin-video-stats) | Home Assistant-add-on: seerstatistik for film, serier og YouTube-videoer i Jellyfin |
+| [jellyfin-music-stats](https://github.com/Tntdruid/jellyfin-music-stats) | Home Assistant-add-on: lyttestatistik for musik i Jellyfin |
