@@ -29,7 +29,9 @@ var I18n = (function () {
             view: 'Visning', view_auto: 'Automatisk', view_poster: 'Plakater', view_posterCard: 'Plakatkort',
             view_thumb: 'Tommel', view_thumbCard: 'Tommel kort', view_banner: 'Banner', view_list: 'Liste',
             favorites: 'Favoritter', latest_in: 'Senest tilføjet i {name}', whos_watching: 'Hvem ser med?',
-            add_user: 'Tilføj bruger', sign_out_user: 'Log {name} ud'
+            add_user: 'Tilføj bruger', sign_out_user: 'Log {name} ud',
+            skip_intro: 'Spring intro over', skip_recap: 'Spring resumé over', skip_preview: 'Spring forsmag over',
+            skip_credits: 'Spring rulletekster over', update_available: 'Ny version {v} af TvFin er klar – kør ./update.sh på serveren'
         },
         en: {
             _name: 'English',
@@ -59,7 +61,9 @@ var I18n = (function () {
             view: 'View', view_auto: 'Automatic', view_poster: 'Posters', view_posterCard: 'Poster cards',
             view_thumb: 'Thumbs', view_thumbCard: 'Thumb cards', view_banner: 'Banners', view_list: 'List',
             favorites: 'Favorites', latest_in: 'Latest in {name}', whos_watching: "Who's watching?",
-            add_user: 'Add user', sign_out_user: 'Sign out {name}'
+            add_user: 'Add user', sign_out_user: 'Sign out {name}',
+            skip_intro: 'Skip intro', skip_recap: 'Skip recap', skip_preview: 'Skip preview',
+            skip_credits: 'Skip credits', update_available: 'TvFin {v} is available – run ./update.sh on the server'
         },
         de: {
             _name: 'Deutsch',
@@ -89,7 +93,9 @@ var I18n = (function () {
             view: 'Ansicht', view_auto: 'Automatisch', view_poster: 'Poster', view_posterCard: 'Posterkarten',
             view_thumb: 'Vorschaubilder', view_thumbCard: 'Vorschaukarten', view_banner: 'Banner', view_list: 'Liste',
             favorites: 'Favoriten', latest_in: 'Neu in {name}', whos_watching: 'Wer schaut?',
-            add_user: 'Benutzer hinzufügen', sign_out_user: '{name} abmelden'
+            add_user: 'Benutzer hinzufügen', sign_out_user: '{name} abmelden',
+            skip_intro: 'Intro überspringen', skip_recap: 'Rückblick überspringen', skip_preview: 'Vorschau überspringen',
+            skip_credits: 'Abspann überspringen', update_available: 'TvFin {v} ist verfügbar – ./update.sh auf dem Server ausführen'
         },
         sv: {
             _name: 'Svenska',
@@ -119,7 +125,9 @@ var I18n = (function () {
             view: 'Visning', view_auto: 'Automatisk', view_poster: 'Affischer', view_posterCard: 'Affischkort',
             view_thumb: 'Miniatyrer', view_thumbCard: 'Miniatyrkort', view_banner: 'Banderoller', view_list: 'Lista',
             favorites: 'Favoriter', latest_in: 'Senast tillagt i {name}', whos_watching: 'Vem tittar?',
-            add_user: 'Lägg till användare', sign_out_user: 'Logga ut {name}'
+            add_user: 'Lägg till användare', sign_out_user: 'Logga ut {name}',
+            skip_intro: 'Hoppa över intro', skip_recap: 'Hoppa över sammanfattning', skip_preview: 'Hoppa över förhandstitt',
+            skip_credits: 'Hoppa över eftertexter', update_available: 'TvFin {v} finns – kör ./update.sh på servern'
         },
         nb: {
             _name: 'Norsk',
@@ -149,7 +157,9 @@ var I18n = (function () {
             view: 'Visning', view_auto: 'Automatisk', view_poster: 'Plakater', view_posterCard: 'Plakatkort',
             view_thumb: 'Miniatyrbilder', view_thumbCard: 'Miniatyrkort', view_banner: 'Bannere', view_list: 'Liste',
             favorites: 'Favoritter', latest_in: 'Nylig lagt til i {name}', whos_watching: 'Hvem ser på?',
-            add_user: 'Legg til bruker', sign_out_user: 'Logg ut {name}'
+            add_user: 'Legg til bruker', sign_out_user: 'Logg ut {name}',
+            skip_intro: 'Hopp over intro', skip_recap: 'Hopp over sammendrag', skip_preview: 'Hopp over forhåndsvisning',
+            skip_credits: 'Hopp over rulletekst', update_available: 'TvFin {v} er klar – kjør ./update.sh på serveren'
         }
     };
     var order = ['da', 'en', 'de', 'sv', 'nb'];

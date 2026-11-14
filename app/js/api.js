@@ -1,7 +1,7 @@
 /* Jellyfin API client. Written without ?. and ?? so it runs on older Tizen TVs. */
 var Api = (function () {
     var CLIENT = 'TvFin';
-    var VERSION = '1.4.1';
+    var VERSION = '1.5.0';
     var STORE_KEY = 'tvfin';
     var isTizen = !!window.tizen;
 
@@ -217,6 +217,64 @@ var Api = (function () {
         var q = 'ParentId=' + parentId + '&Limit=16&' + FIELDS;
         return firstOk('GET', ['/Items/Latest?userId=' + state.userId + '&' + q, '/Users/' + state.userId + '/Items/Latest?' + q]);
     }
+    // Intro/recap/preview/credits markers as [{ type: 'intro'|'recap'|'preview'|'outro', startMs, endMs }].
+    // Uses Jellyfin 10.10+ media segments, falling back to the Intro Skipper plugin's own endpoints.
+    async function segments(itemId) {
+        var out = [];
+        try {
+            var r = await request('GET', '/MediaSegments/' + itemId +
+                '?includeSegmentTypes=Intro&includeSegmentTypes=Outro&includeSegmentTypes=Recap&includeSegmentTypes=Preview');
+            ((r && r.Items) || []).forEach(function (sg) {
+                var type = String(sg.Type || '').toLowerCase();
+                if (type === 'intro' || type === 'outro' || type === 'recap' || type === 'preview') {
+                    out.push({ type: type, startMs: sg.StartTicks / 10000, endMs: sg.EndTicks / 10000 });
+                }
+            });
+            if (out.length) return out;
+        } catch (e) { /* not available */ }
+        try {
+            var r2 = await request('GET', '/Episode/' + itemId + '/IntroSkipperSegments');
+            [['Introduction', 'intro'], ['Credits', 'outro'], ['Recap', 'recap'], ['Preview', 'preview']].forEach(function (k) {
+                var sg = r2 && r2[k[0]];
+                if (sg && sg.Valid !== false && sg.IntroEnd > sg.IntroStart) out.push({ type: k[1], startMs: sg.IntroStart * 1000, endMs: sg.IntroEnd * 1000 });
+            });
+            if (out.length) return out;
+        } catch (e) { /* plugin not installed */ }
+        try {
+            var r3 = await request('GET', '/Episode/' + itemId + '/IntroTimestamps/v1');
+            if (r3 && r3.Valid && r3.IntroEnd > r3.IntroStart) out.push({ type: 'intro', startMs: r3.IntroStart * 1000, endMs: r3.IntroEnd * 1000 });
+        } catch (e) { /* plugin not installed */ }
+        return out;
+    }
+
+    // ---- New version check ----
+    // Reads the version in app/config.xml on GitHub (at most every 6 hours) and returns it if it's newer than this app.
+    var UPDATE_URL = 'https://raw.githubusercontent.com/Tntdruid/TvFin/main/app/config.xml';
+    var UPDATE_KEY = 'tvfin-update';
+    function newer(a, b) {
+        var x = String(a).split('.'), y = String(b).split('.');
+        for (var i = 0; i < 3; i++) {
+            var d = (parseInt(x[i], 10) || 0) - (parseInt(y[i], 10) || 0);
+            if (d) return d > 0;
+        }
+        return false;
+    }
+    async function checkUpdate() {
+        var cache = {};
+        try { cache = JSON.parse(localStorage.getItem(UPDATE_KEY) || '{}'); } catch (e) { /* ignore */ }
+        var latestVersion = cache.version;
+        if (!cache.at || Date.now() - cache.at > 6 * 3600 * 1000) {
+            try {
+                var res = await withTimeout(fetch(UPDATE_URL, { cache: 'no-store' }), 8000);
+                var xml = res.ok ? await res.text() : '';
+                var m = xml.match(/<widget[^>]*\sversion="([\d.]+)"/);
+                if (m) latestVersion = m[1];
+                localStorage.setItem(UPDATE_KEY, JSON.stringify({ at: Date.now(), version: latestVersion }));
+            } catch (e) { /* offline or blocked: try again next time */ }
+        }
+        return latestVersion && newer(latestVersion, VERSION) ? latestVersion : null;
+    }
+
     function favorites() {
         var q = 'Filters=IsFavorite&Recursive=true&IncludeItemTypes=Movie,Series,Episode,Video,MusicVideo&SortBy=SortName&Limit=40&' + FIELDS;
         return firstOk('GET', ['/Items?userId=' + state.userId + '&' + q, '/Users/' + state.userId + '/Items?' + q]);
@@ -431,6 +489,7 @@ var Api = (function () {
         state: state, isTizen: isTizen, connect: connect, logout: logout, validateSession: validateSession,
         qcInitiate: qcInitiate, qcCheck: qcCheck, qcAuthenticate: qcAuthenticate,
         resume: resume, nextUp: nextUp, views: views, latest: latest, favorites: favorites, children: children,
+        segments: segments, checkUpdate: checkUpdate, version: VERSION,
         switchTo: switchTo, removeAccount: removeAccount, isCurrent: isCurrent, userImageUrl: userImageUrl, item: item, imageUrls: imageUrls, bannerUrls: bannerUrls, chapterImageUrl: chapterImageUrl, backdropUrl: backdropUrl,
         setPlayed: setPlayed, setFavorite: setFavorite, search: search, nextEpisode: nextEpisode,
         subtitleUrl: subtitleUrl, savePrefs: savePrefs, SORTS: SORTS,

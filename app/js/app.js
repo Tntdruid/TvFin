@@ -382,7 +382,8 @@ var App = (function () {
                     '<div class="who">' + esc(Api.state.serverName || '') + '</div>' +
                     '<div class="btn small focusable" data-action="search" data-key="search">🔍 ' + esc(t('search')) + '</div>' +
                     '<div class="btn small focusable" data-action="lang" data-key="lang">🌐 ' + esc(I18n.name) + '</div>' +
-                    '<div class="btn small focusable user-btn" data-action="users" data-key="users">' + avatar(acc, 'mini') + esc(Api.state.userName || '') + '</div></header>';
+                    '<div class="btn small focusable user-btn" data-action="users" data-key="users">' + avatar(acc, 'mini') + esc(Api.state.userName || '') + '</div></header>' +
+                    '<div id="update-banner" class="update-banner hidden"></div>';
                 html += row(t('continue_watching'), resume, true, 'resume');
                 html += row(t('next_up'), next, true, 'next');
                 html += row(t('libraries'), libs, true, 'lib');
@@ -396,6 +397,13 @@ var App = (function () {
                 return html + '</div>';
             },
             initialFocus: '.row .card',
+            // Tell the user when a newer TvFin is on GitHub (checked in the background)
+            mounted: function () {
+                Api.checkUpdate().then(function (v) {
+                    var b = document.getElementById('update-banner');
+                    if (v && b) { b.textContent = '⬆ ' + t('update_available', { v: v }); b.classList.remove('hidden'); }
+                }).catch(function () { /* ignore */ });
+            },
             action: async function (a, el) {
                 if (a === 'users') {
                     go('users');

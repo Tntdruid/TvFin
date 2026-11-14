@@ -359,14 +359,23 @@ var Player = (function () {
         session = {
             item: item, info: info, posMs: startMs, started: false,
             audioIndex: tracks.audio, subIndex: tracks.sub,
-            burnIn: info.method !== 'DirectPlay' && /SubtitleMethod=Encode/i.test(info.url)
+            burnIn: info.method !== 'DirectPlay' && /SubtitleMethod=Encode/i.test(info.url),
+            segments: []
         };
+        // Intro/credits markers (Jellyfin 10.10+ media segments or the Intro Skipper plugin)
+        Api.segments(item.Id).then(function (list) { if (session && session.item === item) session.segments = list; });
         backend = Api.isTizen && window.webapis && webapis.avplay ? new AvPlayBackend() : new HtmlBackend();
 
         try {
             backend.open(info.url, startMs, {
                 buffering: function (b) { el.spinner.classList.toggle('hidden', !b); },
-                time: function (ms) { if (session && ms > 0) { session.posMs = ms; if (!el.ui.classList.contains('hidden')) updateUi(); } },
+                time: function (ms) {
+                    if (session && ms > 0) {
+                        session.posMs = ms;
+                        if (!el.ui.classList.contains('hidden')) updateUi();
+                        updateSkip(ms);
+                    }
+                },
                 started: function () {
                     if (!session || session.started) return;
                     session.started = true;
@@ -403,6 +412,7 @@ var Player = (function () {
         seekTarget = null;
         closeMenu();
         Subs.clear();
+        hideSkip();
         var s = session;
         if (backend && s && s.started) {
             var tm = backend.time();
@@ -513,6 +523,55 @@ var Player = (function () {
         }
     }
 
+    // ---------- Skip intro / credits ----------
+    var skipSeg = null;
+
+    function skipLabel(seg) {
+        if (seg.type === 'intro') return t('skip_intro');
+        if (seg.type === 'recap') return t('skip_recap');
+        if (seg.type === 'preview') return t('skip_preview');
+        // Credits of an episode: go straight to the next episode
+        return session && session.item.Type === 'Episode' ? t('up_next') + ' ▶' : t('skip_credits');
+    }
+
+    // Show the skip button while the position is inside a segment (not in its last second)
+    function updateSkip(ms) {
+        if (!session || menuOpen) return;
+        var found = null, list = session.segments || [];
+        for (var i = 0; i < list.length; i++) {
+            if (ms >= list[i].startMs && ms < list[i].endMs - 1000) { found = list[i]; break; }
+        }
+        if (found === skipSeg) return;
+        skipSeg = found;
+        if (found) {
+            el.skip.textContent = skipLabel(found);
+            el.skip.classList.remove('hidden');
+        } else {
+            el.skip.classList.add('hidden');
+        }
+    }
+
+    function hideSkip() {
+        skipSeg = null;
+        if (el.skip) el.skip.classList.add('hidden');
+    }
+
+    function doSkip() {
+        var seg = skipSeg;
+        hideSkip();
+        if (!seg || !session || !backend) return;
+        var d = durMs();
+        // Credits that run to (nearly) the end: finish the item, so the next episode starts / it's marked as played
+        if (seg.type === 'outro' && (!d || seg.endMs >= d - 5000)) {
+            session.posMs = d || seg.endMs;
+            stop(true);
+            return;
+        }
+        session.posMs = seg.endMs;
+        backend.seek(seg.endMs, function () { progress('TimeUpdate'); });
+        showUi();
+    }
+
     // ---------- Controls ----------
     function togglePause(forceState) {
         if (!backend || !session || !session.started) return;
@@ -555,7 +614,8 @@ var Player = (function () {
             return true;
         }
         switch (k) {
-            case 13: case 10252: togglePause(); return true;           // OK, Play/Pause
+            case 13: if (skipSeg) { doSkip(); return true; } togglePause(); return true; // OK: skip if offered, else pause
+            case 10252: togglePause(); return true;                     // Play/Pause
             case 415: togglePause('play'); return true;                // Play
             case 19: togglePause('pause'); return true;                // Pause
             case 37: seekBy(-10000); return true;
@@ -584,7 +644,7 @@ var Player = (function () {
     el = {
         ui: $('player-ui'), title: $('pu-title'), sub: $('pu-sub'), fill: $('pu-fill'), seek: $('pu-seek'),
         time: $('pu-time'), dur: $('pu-dur'), state: $('pu-state'), spinner: $('pu-spinner'), hint: $('pu-hint'),
-        menu: $('track-menu')
+        menu: $('track-menu'), skip: $('skip-btn')
     };
 
     return {

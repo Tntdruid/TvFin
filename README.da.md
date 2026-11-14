@@ -6,6 +6,8 @@
 - **Fortsæt med at se** / **Næste afsnit** / biblioteker
 - Afspiller med Samsungs AVPlay (direkte afspilning af mkv/mp4/HEVC m.m., ellers omkoder serveren til HLS)
 - Infoside med kapitler, lyd/undertekst-valg, automatisk næste afsnit, søgning, sortering, visninger, favoritter og senest tilføjet, flere brugere og 5 sprog – se [CHANGELOG.da.md](CHANGELOG.da.md)
+- **Spring intro / rulletekster over** – kræver Jellyfin 10.10+ med en udbyder af mediesegmenter (fx [Intro Skipper](https://github.com/intro-skipper/intro-skipper)-pluginet)
+- Viser på forsiden, når der er en nyere TvFin på GitHub
 - **Husker hvor du er nået til** – positionen gemmes på Jellyfin-serveren (hvert 10. sek, ved pause, spol og stop), så den også passer med telefonen osv.
 
 ## Skærmbilleder
@@ -19,6 +21,7 @@
 | ![Bibliotek (plakater)](docs/screenshots/library.png) | ![Listevisning](docs/screenshots/list.png) |
 | ![Søgning](docs/screenshots/search.png) | ![Login med Quick Connect](docs/screenshots/login.png) |
 | ![Favoritter og senest tilføjet](docs/screenshots/homerows.png) | ![Hvem ser med?](docs/screenshots/users.png) |
+| ![Spring intro over](docs/screenshots/skip.png) | |
 
 _Demo-indhold med opdigtede titler og genereret grafik._
 

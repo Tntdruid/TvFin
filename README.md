@@ -6,6 +6,8 @@
 - **Continue watching** / **Next up** / libraries
 - Playback through Samsung's AVPlay (direct play of mkv/mp4/HEVC etc., otherwise the server transcodes to HLS)
 - Info page with chapters, audio/subtitle selection, auto-play next episode, search, sorting, view modes, favorites and latest rows, several users and 5 UI languages – see [CHANGELOG.md](CHANGELOG.md)
+- **Skip intro / credits** – needs Jellyfin 10.10+ with a media segment provider (e.g. the [Intro Skipper](https://github.com/intro-skipper/intro-skipper) plugin)
+- Tells you on the home screen when a newer TvFin is on GitHub
 - **Remembers where you left off** – the position is stored on the Jellyfin server (every 10 s, and on pause, seek and stop), so it stays in sync with your phone and other clients.
 
 ## Screenshots
@@ -19,6 +21,7 @@
 | ![Library (posters)](docs/screenshots/library.png) | ![List view](docs/screenshots/list.png) |
 | ![Search](docs/screenshots/search.png) | ![Quick Connect sign-in](docs/screenshots/login.png) |
 | ![Favorites and latest additions](docs/screenshots/homerows.png) | ![Who's watching?](docs/screenshots/users.png) |
+| ![Skip intro](docs/screenshots/skip.png) | |
 
 _Demo content with made-up titles and generated artwork._
 

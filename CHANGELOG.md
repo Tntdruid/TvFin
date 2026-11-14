@@ -4,6 +4,13 @@
 
 All changes to TvFin. Update the TV by running `./update.sh` on the server.
 
+## 1.5.0 – 2026-11-14
+
+### Added
+- **Skip intro / recap / credits:** a *Skip intro* button appears while an intro plays; press OK to jump past it. At the credits of an episode the button says *Next episode ▶* and goes straight to the next-episode countdown.
+  - Uses Jellyfin 10.10+ media segments (needs a segment provider such as the Intro Skipper plugin), with a fallback to Intro Skipper's own endpoints on older servers.
+- **New version notice:** the home screen shows "TvFin x.y.z is available – run ./update.sh on the server" when a newer version is on GitHub (checked at most every 6 hours).
+
 ## 1.4.1 – 2026-11-14
 
 ### Fixed

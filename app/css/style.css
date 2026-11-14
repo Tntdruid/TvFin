@@ -389,6 +389,27 @@ body.menu-open #subs { display: none; }
 .tm-item.focused { background: #fff; color: #111; }
 .tm-item.focused.on:before { color: #111; }
 
+/* Skip intro / credits */
+#skip-btn {
+    position: fixed; right: 80px; bottom: 240px; z-index: 43;
+    padding: 18px 40px;
+    border-radius: 12px;
+    background: #fff; color: #111;
+    font-size: 30px; font-weight: 700;
+    box-shadow: 0 8px 30px rgba(0,0,0,.5);
+}
+body:not(.playing) #skip-btn { display: none; }
+
+/* New version banner */
+.update-banner {
+    margin: 10px 80px 0;
+    padding: 14px 24px;
+    border-radius: 12px;
+    background: rgba(0,164,220,.15);
+    border: 2px solid var(--accent2);
+    font-size: 24px;
+}
+
 /* Users / avatars */
 .avatar {
     position: relative; display: inline-block; vertical-align: middle;

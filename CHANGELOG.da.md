@@ -4,6 +4,13 @@
 
 Alle ændringer i TvFin. Opdater TV'et med `./update.sh` på serveren.
 
+## 1.5.0 – 2026-11-14
+
+### Nyt
+- **Spring intro / resumé / rulletekster over:** knappen *Spring intro over* vises, mens introen kører; tryk OK for at springe den over. Ved rulleteksterne i et afsnit står der *Næste afsnit ▶*, som går direkte til nedtællingen til næste afsnit.
+  - Bruger Jellyfin 10.10+ mediesegmenter (kræver en udbyder som Intro Skipper-pluginet), med fallback til Intro Skippers egne endpoints på ældre servere.
+- **Besked om ny version:** forsiden viser "Ny version x.y.z af TvFin er klar – kør ./update.sh på serveren", når der ligger en nyere version på GitHub (tjekkes højst hver 6. time).
+
 ## 1.4.1 – 2026-11-14
 
 ### Rettet
