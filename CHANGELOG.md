@@ -2,6 +2,12 @@
 
 Alle ændringer i TvFin. Opdater TV'et med `./update.sh` på serveren.
 
+## 1.2.1 – 2026-11-14
+
+### Rettet
+- **Større thumbnails:** kort er nu 560 px brede (før 420), plakater 300 px (før 240), med større tekst og skarpere billeder.
+- Hvis TV'et rapporterer en skærm større end 1920 px (fx 4K), skaleres hele appen op, så intet bliver småt.
+
 ## 1.2.0 – 2026-11-14
 
 ### Nyt

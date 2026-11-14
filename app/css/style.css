@@ -137,13 +137,13 @@ body:not(.playing) #av-player { display: none; }
 .card {
     display: inline-block;
     vertical-align: top;
-    width: 240px;
+    width: 300px;
     margin: 0 10px 24px;
     white-space: normal;
     cursor: pointer;
     transition: transform .15s;
 }
-.card.wide { width: 420px; }
+.card.wide { width: 560px; }
 .card .poster {
     position: relative;
     width: 100%;
@@ -154,7 +154,7 @@ body:not(.playing) #av-player { display: none; }
     border: 4px solid transparent;
 }
 .card.wide .poster { padding-top: 56.25%; }
-.card.focused { transform: scale(1.07); }
+.card.focused { transform: scale(1.05); }
 .card.focused .poster { border-color: var(--focus); box-shadow: 0 10px 40px rgba(0,0,0,.6); }
 .poster-img {
     position: absolute; left: 0; top: 0;
@@ -167,10 +167,10 @@ body:not(.playing) #av-player { display: none; }
     text-align: center; font-size: 24px; color: var(--muted);
 }
 .card-title {
-    margin-top: 10px; font-size: 24px; font-weight: 600;
+    margin-top: 12px; font-size: 28px; font-weight: 600;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.card-sub { font-size: 21px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-sub { font-size: 24px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .progress {
     position: absolute; left: 0; right: 0; bottom: 0;
     height: 8px; background: rgba(0,0,0,.55);

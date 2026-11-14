@@ -91,7 +91,7 @@ var App = (function () {
     function isWide(it) { return it.Type === 'Episode' || it.Type === 'Video' || it.Type === 'CollectionFolder' || it.Type === 'UserView'; }
 
     function card(it, wide, keyPrefix) {
-        var urls = Api.imageUrls(it, wide, wide ? 300 : 420);
+        var urls = Api.imageUrls(it, wide, wide ? 420 : 560);
         var ud = it.UserData || {};
         var pct = ud.PlayedPercentage || 0;
         var title = it.Name, sub = '';
@@ -476,7 +476,7 @@ var App = (function () {
                 if (chapters.length) {
                     html += '<section class="row"><h2>' + esc(t('scenes')) + '</h2><div class="row-items" data-scroll="x">' +
                         chapters.map(function (c, i) {
-                            var img = c.ImageTag ? Api.chapterImageUrl(it, i, c.ImageTag, 240) : null;
+                            var img = c.ImageTag ? Api.chapterImageUrl(it, i, c.ImageTag, 320) : null;
                             var name = c.Name || t('chapter', { n: i + 1 });
                             return '<div class="card wide chapter focusable" data-action="chapter" data-index="' + i + '" data-key="ch-' + i + '">' +
                                 '<div class="poster"><span class="poster-fallback">' + esc(name) + '</span>' +

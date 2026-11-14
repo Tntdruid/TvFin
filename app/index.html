@@ -10,6 +10,15 @@
         if (window.tizen) {
             document.write('<script src="$WEBAPIS/webapis/webapis.js"><\/script>');
         }
+        // Designet til 1920 px. Hvis TV'et rapporterer en større skærm (fx 4K), skaleres alt op.
+        (function () {
+            function fit() {
+                var w = window.innerWidth;
+                document.documentElement.style.zoom = w > 2000 ? (w / 1920) : '';
+            }
+            fit();
+            window.addEventListener('resize', fit);
+        })();
     </script>
 </head>
 <body>
