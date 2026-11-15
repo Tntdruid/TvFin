@@ -4,6 +4,13 @@
 
 All changes to TvFin. Update the TV by running `./update.sh` on the server.
 
+## 1.6.1 – 2026-11-15
+
+### Changed
+- **Next episode starts before the credits finish:** a *Next episode* card now appears in the player when the credits start (or 30 seconds before the end if Jellyfin doesn't know where the credits are). After a 10-second countdown the next episode starts right away – no more waiting for the credits to finish.
+  - **OK** starts it immediately, **Back** hides the card and lets you watch the credits.
+  - The countdown follows playback, so it pauses when you pause.
+
 ## 1.6.0 – 2026-11-15
 
 ### Added

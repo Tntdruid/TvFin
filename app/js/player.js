@@ -364,6 +364,10 @@ var Player = (function () {
         };
         // Intro/credits markers (Jellyfin 10.10+ media segments or the Intro Skipper plugin)
         Api.segments(item.Id).then(function (list) { if (session && session.item === item) session.segments = list; });
+        // Next episode (for the in-player "Next episode" card)
+        if (item.Type === 'Episode') {
+            Api.nextEpisode(item).then(function (n) { if (session && session.item === item) session.next = n; }).catch(function () { /* none */ });
+        }
         backend = Api.isTizen && window.webapis && webapis.avplay ? new AvPlayBackend() : new HtmlBackend();
 
         try {
@@ -374,6 +378,7 @@ var Player = (function () {
                         session.posMs = ms;
                         if (!el.ui.classList.contains('hidden')) updateUi();
                         updateSkip(ms);
+                        updateUpNext(ms);
                     }
                 },
                 started: function () {
@@ -389,7 +394,11 @@ var Player = (function () {
                     progressTimer = setInterval(function () { progress(); }, PROGRESS_INTERVAL);
                     showUi();
                 },
-                ended: function () { if (session) session.posMs = durMs(); stop(true); },
+                ended: function () {
+                    if (!session) return;
+                    session.posMs = durMs();
+                    stop(true, session.next && !session.nextDismissed ? session.next : null);
+                },
                 error: function (err) { fail(t('play_error', { e: err && err.message ? err.message : err })); }
             });
         } catch (e) {
@@ -413,6 +422,7 @@ var Player = (function () {
         closeMenu();
         Subs.clear();
         hideSkip();
+        hideUpNext();
         var s = session;
         if (backend && s && s.started) {
             var tm = backend.time();
@@ -437,14 +447,15 @@ var Player = (function () {
         return s;
     }
 
-    async function stop(ended) {
+    // next: episode to start right away (from the in-player "Next episode" card)
+    async function stop(ended, next) {
         if (!active) return;
         if (ended && session) session.ended = true;
         var item = session ? session.item : null;
         await teardown(true);
         var cb = onExit;
         onExit = null;
-        if (cb) cb(item, !!ended);
+        if (cb) cb(item, !!ended, next || null);
     }
 
     // Restart the same item at the current position with other tracks.
@@ -541,6 +552,8 @@ var Player = (function () {
         for (var i = 0; i < list.length; i++) {
             if (ms >= list[i].startMs && ms < list[i].endMs - 1000) { found = list[i]; break; }
         }
+        // Credits of an episode with a next episode: the "Next episode" card takes over
+        if (found && found.type === 'outro' && session.next && !session.nextDismissed) found = null;
         if (found === skipSeg) return;
         skipSeg = found;
         if (found) {
@@ -570,6 +583,51 @@ var Player = (function () {
         session.posMs = seg.endMs;
         backend.seek(seg.endMs, function () { progress('TimeUpdate'); });
         showUi();
+    }
+
+    // ---------- In-player "Next episode" card ----------
+    var UPNEXT_COUNTDOWN = 10000;   // ms of playback before the next episode starts
+    var UPNEXT_FALLBACK = 30000;    // without a credits marker: show the card this long before the end
+    var upNextShown = false, upNextDeadline = 0;
+
+    function upNextStart() {
+        var list = session.segments || [];
+        for (var i = 0; i < list.length; i++) if (list[i].type === 'outro') return list[i].startMs;
+        var d = durMs();
+        return d ? d - UPNEXT_FALLBACK : Infinity;
+    }
+
+    function updateUpNext(ms) {
+        if (!session || !session.next || session.nextDismissed || menuOpen) return;
+        if (!upNextShown) {
+            if (ms < upNextStart() || seekTarget !== null) return;
+            upNextShown = true;
+            upNextDeadline = ms + UPNEXT_COUNTDOWN;
+            var n = session.next;
+            var img = Api.imageUrls(n, true, 300);
+            el.upnext.innerHTML = '<div class="un-label" id="un-count"></div>' +
+                '<div class="un-img">' + (img.length ? '<img class="poster-img" src="' + esc(img[0]) + '" data-alt="' + esc(img.slice(1).join('|')) + '" onerror="App.imgErr(this)" alt="">' : '') + '</div>' +
+                '<div class="un-title">' + esc('S' + (n.ParentIndexNumber || 0) + ':E' + (n.IndexNumber || 0) + ' · ' + n.Name) + '</div>' +
+                '<div class="un-hint">OK ▶ ' + esc(t('play_now')) + ' &nbsp;·&nbsp; ' + esc(t('back_hide')) + '</div>';
+            el.upnext.classList.remove('hidden');
+        }
+        // Counts playback time, so it pauses when the video is paused
+        var left = Math.max(0, Math.ceil((upNextDeadline - ms) / 1000));
+        var c = document.getElementById('un-count');
+        if (c) c.textContent = t('up_next') + ' · ' + t('starts_in', { n: left });
+        if (ms >= upNextDeadline) playNextNow();
+    }
+
+    function hideUpNext() {
+        upNextShown = false;
+        if (el.upnext) { el.upnext.classList.add('hidden'); el.upnext.innerHTML = ''; }
+    }
+
+    function playNextNow() {
+        if (!session || !session.next) return;
+        var next = session.next;
+        session.posMs = durMs() || session.posMs;   // counts as watched
+        stop(true, next);
     }
 
     // ---------- Controls ----------
@@ -614,7 +672,10 @@ var Player = (function () {
             return true;
         }
         switch (k) {
-            case 13: if (skipSeg) { doSkip(); return true; } togglePause(); return true; // OK: skip if offered, else pause
+            case 13:
+                if (upNextShown) { playNextNow(); return true; }
+                if (skipSeg) { doSkip(); return true; }
+                togglePause(); return true;                             // OK: next/skip if offered, else pause
             case 10252: togglePause(); return true;                     // Play/Pause
             case 415: togglePause('play'); return true;                // Play
             case 19: togglePause('pause'); return true;                // Pause
@@ -624,7 +685,10 @@ var Player = (function () {
             case 417: seekBy(30000); return true;                       // Fast forward
             case 38: openMenu(); return true;                           // Up: audio/subtitles
             case 40: showUi(); return true;
-            case 10009: case 27: case 8: case 413: stop(); return true; // Back / Stop
+            case 10009: case 27: case 8:
+                if (upNextShown) { session.nextDismissed = true; hideUpNext(); return true; }
+                stop(); return true;                                    // Back
+            case 413: stop(); return true;                              // Stop
         }
         return false;
     }
@@ -644,7 +708,7 @@ var Player = (function () {
     el = {
         ui: $('player-ui'), title: $('pu-title'), sub: $('pu-sub'), fill: $('pu-fill'), seek: $('pu-seek'),
         time: $('pu-time'), dur: $('pu-dur'), state: $('pu-state'), spinner: $('pu-spinner'), hint: $('pu-hint'),
-        menu: $('track-menu'), skip: $('skip-btn')
+        menu: $('track-menu'), skip: $('skip-btn'), upnext: $('upnext-card')
     };
 
     return {

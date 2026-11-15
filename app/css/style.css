@@ -400,6 +400,20 @@ body.menu-open #subs { display: none; }
 }
 body:not(.playing) #skip-btn { display: none; }
 
+/* In-player "Next episode" card */
+#upnext-card {
+    position: fixed; right: 80px; bottom: 240px; z-index: 44;
+    width: 520px; padding: 22px;
+    border-radius: 16px;
+    background: rgba(20,22,32,.94);
+    box-shadow: 0 10px 40px rgba(0,0,0,.6);
+}
+body:not(.playing) #upnext-card { display: none; }
+#upnext-card .un-label { font-size: 24px; color: var(--accent2); font-weight: 700; margin-bottom: 14px; }
+#upnext-card .un-img { position: relative; width: 100%; padding-top: 56.25%; border-radius: 10px; overflow: hidden; background: var(--card); }
+#upnext-card .un-title { margin-top: 14px; font-size: 28px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#upnext-card .un-hint { margin-top: 6px; font-size: 21px; color: var(--muted); }
+
 /* New version banner */
 .update-banner {
     margin: 10px 80px 0;

@@ -4,6 +4,13 @@
 
 Alle ændringer i TvFin. Opdater TV'et med `./update.sh` på serveren.
 
+## 1.6.1 – 2026-11-15
+
+### Ændret
+- **Næste afsnit starter før rulleteksterne er færdige:** et *Næste afsnit*-kort vises nu i afspilleren, når rulleteksterne starter (eller 30 sekunder før slut, hvis Jellyfin ikke ved, hvor rulleteksterne er). Efter 10 sekunders nedtælling starter næste afsnit direkte – du skal ikke længere vente på, at rulleteksterne er færdige.
+  - **OK** starter det med det samme, **Tilbage** skjuler kortet, så du kan se rulleteksterne.
+  - Nedtællingen følger afspilningen, så den står stille, når du pauser.
+
 ## 1.6.0 – 2026-11-15
 
 ### Nyt

@@ -215,10 +215,25 @@ var App = (function () {
     function play(it, ticks) {
         var entry = stack[stack.length - 1];
         if (entry && Nav.current) entry.focusKey = Nav.current.getAttribute('data-key');
-        Player.start(it, ticks, function (last, ended) {
-            if (ended && last && last.Type === 'Episode') upNext(last);
+        Player.start(it, ticks, function (last, ended, next) {
+            if (next) playNextEpisode(next);                   // from the in-player card
+            else if (ended && last && last.Type === 'Episode') upNext(last);
             else render();
         });
+    }
+
+    // Start an episode straight away; the info page behind it switches to that episode
+    async function playNextEpisode(next) {
+        try {
+            var full = await Api.item(next.Id);
+            var entry = stack[stack.length - 1];
+            if (entry && entry.name === 'detail') { entry.params.item = full; entry.focusKey = null; }
+            var pos = full.UserData && full.UserData.PlaybackPositionTicks;
+            play(full, pos > 0 ? pos : 0);
+        } catch (e) {
+            toast(t('error', { e: e.message || e }));
+            render();
+        }
     }
 
     // After an episode: show "Next episode in 10 sec" and start it automatically.
@@ -248,17 +263,7 @@ var App = (function () {
             if (n <= 0) { closeDialog(); startNext(); }
         }, 1000);
 
-        async function startNext() {
-            try {
-                var full = await Api.item(next.Id);
-                var entry = stack[stack.length - 1];
-                if (entry && entry.name === 'detail') { entry.params.item = full; entry.focusKey = null; }
-                var pos = full.UserData && full.UserData.PlaybackPositionTicks;
-                play(full, pos > 0 ? pos : 0);
-            } catch (e) {
-                toast(t('error', { e: e.message || e }));
-            }
-        }
+        function startNext() { playNextEpisode(next); }
     }
 
     // ---------- Screens ----------
