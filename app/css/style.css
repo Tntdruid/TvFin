@@ -328,6 +328,7 @@ body:not(.playing) #av-player { display: none; }
 .pu-times { margin-top: 18px; font-size: 28px; }
 .pu-times #pu-state { display: inline-block; width: 50px; }
 .pu-sep { color: var(--muted); margin: 0 6px; }
+.pu-ends { margin-left: 28px; color: #cfd2de; }
 .pu-hint { float: right; color: var(--muted); font-size: 22px; margin-top: 4px; }
 
 .pu-spinner {

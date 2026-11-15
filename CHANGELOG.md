@@ -4,6 +4,12 @@
 
 All changes to TvFin. Update the TV by running `./update.sh` on the server.
 
+## 1.6.3 – 2026-11-15
+
+### Added
+- **Ends at** in the player: the time the video will finish (e.g. *Ends at 18:24*) next to the duration. While seeking it shows when it would end from the new position.
+- **Back to the top:** when you've scrolled down a page, **Back** first jumps to the top. Press Back again to go back (or leave the app from the home screen) as before.
+
 ## 1.6.2 – 2026-11-15
 
 ### Added

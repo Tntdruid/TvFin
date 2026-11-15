@@ -4,6 +4,12 @@
 
 Alle ændringer i TvFin. Opdater TV'et med `./update.sh` på serveren.
 
+## 1.6.3 – 2026-11-15
+
+### Nyt
+- **Slutter kl.** i afspilleren: klokkeslættet hvor videoen er færdig (fx *Slutter 18.24*) ved siden af spilletiden. Mens du spoler, viser den hvornår den slutter fra den nye position.
+- **Tilbage til toppen:** når du har rullet ned på en side, hopper **Tilbage** først op til toppen. Tryk Tilbage igen for at gå tilbage (eller lukke appen fra forsiden) som før.
+
 ## 1.6.2 – 2026-11-15
 
 ### Nyt

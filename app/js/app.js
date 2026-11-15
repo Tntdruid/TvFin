@@ -29,6 +29,14 @@ var App = (function () {
 
     function back() {
         if (dialog) { closeDialog(); return; }
+        // Scrolled down? Back first jumps to the top of the page; the next Back goes back as usual
+        var sc = root.querySelector('[data-scroll="y"]');
+        var first = screen && screen.initialFocus ? root.querySelector(screen.initialFocus) : null;
+        if (sc && sc.scrollTop > 100 && first && Nav.current !== first) {
+            Nav.focus(first);
+            sc.scrollTop = 0;
+            return;
+        }
         if (stack.length <= 1) { exitApp(); return; }
         stack.pop();
         render();

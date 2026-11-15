@@ -214,6 +214,14 @@ var Player = (function () {
         var pos = session.posMs;
         el.time.textContent = fmt(seekTarget !== null ? seekTarget : pos);
         el.dur.textContent = fmt(d);
+        // "Ends at 18.24": now + time left (from the seek target while seeking)
+        if (d) {
+            var end = new Date(Date.now() + Math.max(0, d - (seekTarget !== null ? seekTarget : pos)));
+            var mm = end.getMinutes();
+            el.ends.textContent = t('ends_at', { t: end.getHours() + t('time_sep') + (mm < 10 ? '0' : '') + mm });
+        } else {
+            el.ends.textContent = '';
+        }
         el.fill.style.width = d ? Math.min(100, pos / d * 100) + '%' : '0%';
         if (seekTarget !== null && d) {
             el.seek.style.display = 'block';
@@ -707,7 +715,7 @@ var Player = (function () {
 
     el = {
         ui: $('player-ui'), title: $('pu-title'), sub: $('pu-sub'), fill: $('pu-fill'), seek: $('pu-seek'),
-        time: $('pu-time'), dur: $('pu-dur'), state: $('pu-state'), spinner: $('pu-spinner'), hint: $('pu-hint'),
+        time: $('pu-time'), dur: $('pu-dur'), ends: $('pu-ends'), state: $('pu-state'), spinner: $('pu-spinner'), hint: $('pu-hint'),
         menu: $('track-menu'), skip: $('skip-btn'), upnext: $('upnext-card')
     };
 
