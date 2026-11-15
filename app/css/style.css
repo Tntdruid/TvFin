@@ -410,6 +410,19 @@ body:not(.playing) #skip-btn { display: none; }
     font-size: 24px;
 }
 
+/* Cast and person page */
+.card.person { width: 220px; }
+.poster-fallback.initials { font-size: 64px; font-weight: 700; color: #5d6380; }
+.person-top { display: flex; align-items: flex-start; padding: 20px 80px 10px; }
+.person-img {
+    position: relative; flex: 0 0 auto;
+    width: 200px; height: 300px;
+    border-radius: 14px; overflow: hidden; background: var(--card);
+}
+.person-info { flex: 1; margin-left: 50px; min-width: 0; }
+.person-info h1 { font-size: 48px; margin: 6px 0 10px; }
+.person-info .detail-overview { margin-top: 14px; max-height: 156px; }
+
 /* Users / avatars */
 .avatar {
     position: relative; display: inline-block; vertical-align: middle;

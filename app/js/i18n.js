@@ -31,7 +31,7 @@ var I18n = (function () {
             favorites: 'Favoritter', latest_in: 'Senest tilføjet i {name}', whos_watching: 'Hvem ser med?',
             add_user: 'Tilføj bruger', sign_out_user: 'Log {name} ud',
             skip_intro: 'Spring intro over', skip_recap: 'Spring resumé over', skip_preview: 'Spring forsmag over',
-            skip_credits: 'Spring rulletekster over', update_available: 'Ny version {v} af TvFin er klar – kør ./update.sh på serveren'
+            skip_credits: 'Spring rulletekster over', cast: 'Medvirkende', more_like_this: 'Mere som dette', update_available: 'Ny version {v} af TvFin er klar – kør ./update.sh på serveren'
         },
         en: {
             _name: 'English',
@@ -63,7 +63,7 @@ var I18n = (function () {
             favorites: 'Favorites', latest_in: 'Latest in {name}', whos_watching: "Who's watching?",
             add_user: 'Add user', sign_out_user: 'Sign out {name}',
             skip_intro: 'Skip intro', skip_recap: 'Skip recap', skip_preview: 'Skip preview',
-            skip_credits: 'Skip credits', update_available: 'TvFin {v} is available – run ./update.sh on the server'
+            skip_credits: 'Skip credits', cast: 'Cast', more_like_this: 'More like this', update_available: 'TvFin {v} is available – run ./update.sh on the server'
         },
         de: {
             _name: 'Deutsch',
@@ -95,7 +95,7 @@ var I18n = (function () {
             favorites: 'Favoriten', latest_in: 'Neu in {name}', whos_watching: 'Wer schaut?',
             add_user: 'Benutzer hinzufügen', sign_out_user: '{name} abmelden',
             skip_intro: 'Intro überspringen', skip_recap: 'Rückblick überspringen', skip_preview: 'Vorschau überspringen',
-            skip_credits: 'Abspann überspringen', update_available: 'TvFin {v} ist verfügbar – ./update.sh auf dem Server ausführen'
+            skip_credits: 'Abspann überspringen', cast: 'Besetzung', more_like_this: 'Ähnliche Titel', update_available: 'TvFin {v} ist verfügbar – ./update.sh auf dem Server ausführen'
         },
         sv: {
             _name: 'Svenska',
@@ -127,7 +127,7 @@ var I18n = (function () {
             favorites: 'Favoriter', latest_in: 'Senast tillagt i {name}', whos_watching: 'Vem tittar?',
             add_user: 'Lägg till användare', sign_out_user: 'Logga ut {name}',
             skip_intro: 'Hoppa över intro', skip_recap: 'Hoppa över sammanfattning', skip_preview: 'Hoppa över förhandstitt',
-            skip_credits: 'Hoppa över eftertexter', update_available: 'TvFin {v} finns – kör ./update.sh på servern'
+            skip_credits: 'Hoppa över eftertexter', cast: 'Medverkande', more_like_this: 'Mer som detta', update_available: 'TvFin {v} finns – kör ./update.sh på servern'
         },
         nb: {
             _name: 'Norsk',
@@ -159,7 +159,7 @@ var I18n = (function () {
             favorites: 'Favoritter', latest_in: 'Nylig lagt til i {name}', whos_watching: 'Hvem ser på?',
             add_user: 'Legg til bruker', sign_out_user: 'Logg ut {name}',
             skip_intro: 'Hopp over intro', skip_recap: 'Hopp over sammendrag', skip_preview: 'Hopp over forhåndsvisning',
-            skip_credits: 'Hopp over rulletekst', update_available: 'TvFin {v} er klar – kjør ./update.sh på serveren'
+            skip_credits: 'Hopp over rulletekst', cast: 'Medvirkende', more_like_this: 'Mer som dette', update_available: 'TvFin {v} er klar – kjør ./update.sh på serveren'
         }
     };
     var order = ['da', 'en', 'de', 'sv', 'nb'];

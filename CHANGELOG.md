@@ -4,6 +4,13 @@
 
 All changes to TvFin. Update the TV by running `./update.sh` on the server.
 
+## 1.6.0 – 2026-11-15
+
+### Added
+- **Cast** on the info page: photos, names and roles of the actors (initials when there is no photo).
+- **Actor pages:** select an actor to see their photo, birth year, birthplace, biography and every movie and series they're in on your server, newest first.
+- **More like this** on the info page (for episodes it uses the series).
+
 ## 1.5.0 – 2026-11-14
 
 ### Added

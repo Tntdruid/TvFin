@@ -4,6 +4,13 @@
 
 Alle ændringer i TvFin. Opdater TV'et med `./update.sh` på serveren.
 
+## 1.6.0 – 2026-11-15
+
+### Nyt
+- **Medvirkende** på infosiden: billeder, navne og roller for skuespillerne (initialer når der ikke er et billede).
+- **Skuespillersider:** vælg en skuespiller for at se billede, fødselsår, fødested, biografi og alle film og serier med dem på din server, nyeste først.
+- **Mere som dette** på infosiden (for afsnit bruges serien).
+
 ## 1.5.0 – 2026-11-14
 
 ### Nyt

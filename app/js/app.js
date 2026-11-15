@@ -529,8 +529,23 @@ var App = (function () {
         };
     };
 
-    Screens.detail = function (params) {
+    function initials(name) {
+        return esc(String(name || '?').split(' ').map(function (w) { return w.charAt(0); }).join('').slice(0, 2).toUpperCase());
+    }
+
+    // Actor card: portrait photo (or initials), name and role
+    function personCard(p) {
+        var img = Api.personImageUrl(p, 360);
+        return '<div class="card person focusable" data-action="person" data-id="' + esc(p.Id) + '" data-key="p-' + esc(p.Id) + '">' +
+            '<div class="poster"><span class="poster-fallback initials">' + initials(p.Name) + '</span>' +
+            (img ? '<img class="poster-img" src="' + esc(img) + '" onerror="App.imgErr(this)" alt="">' : '') + '</div>' +
+            '<div class="card-title">' + esc(p.Name) + '</div>' +
+            (p.Role ? '<div class="card-sub">' + esc(p.Role) + '</div>' : '') + '</div>';
+    }
+
+    Screens.detail = function (params, entry) {
         var it = params.item;
+        var items = {};   // "More like this" items by id
         return {
             initialFocus: '[data-action="play"]',
             render: async function () {
@@ -614,11 +629,40 @@ var App = (function () {
                                 Player.fmt(c.StartPositionTicks / 10000) + '</div></div></div>';
                         }).join('') + '</div></section>';
                 }
+
+                // Cast
+                var cast = (it.People || []).filter(function (p) { return p.Type === 'Actor' || p.Type === 'GuestStar'; }).slice(0, 30);
+                if (cast.length) {
+                    html += '<section class="row"><h2>' + esc(t('cast')) + '</h2><div class="row-items" data-scroll="x">' +
+                        cast.map(personCard).join('') + '</div></section>';
+                }
+                // "More like this" is filled in after the page is shown (see mounted)
+                html += '<div id="similar-row"></div>';
                 return html + '</div>';
+            },
+            mounted: function () {
+                var shownFor = it.Id;
+                Api.similar(it).then(function (r) {
+                    var box = document.getElementById('similar-row');
+                    var list = (r && r.Items) || [];
+                    if (!box || !list.length || shownFor !== it.Id) return;
+                    list.forEach(function (x) { items[x.Id] = x; });
+                    box.innerHTML = row(t('more_like_this'), list, 'auto', 'sim');
+                    // Back from a similar item: put focus back on it
+                    var target = entry && entry.focusKey ? box.querySelector('[data-key="' + entry.focusKey + '"]') : null;
+                    if (target) Nav.focus(target);
+                }).catch(function () { /* none */ });
             },
             action: async function (a, el) {
                 var ud = it.UserData || {};
                 try {
+                    if (a === 'person') {
+                        var id = el.getAttribute('data-id');
+                        var person = (it.People || []).filter(function (p) { return p.Id === id; })[0];
+                        if (person) go('person', { person: person });
+                        return;
+                    }
+                    if (a === 'item') { openItem(items[el.getAttribute('data-id')]); return; }
                     if (a === 'play') play(it, ud.PlaybackPositionTicks || 0);
                     else if (a === 'restart') play(it, 0);
                     else if (a === 'chapter') play(it, it.Chapters[+el.getAttribute('data-index')].StartPositionTicks);
@@ -627,6 +671,38 @@ var App = (function () {
                 } catch (e) {
                     toast(t('error', { e: e.message || e }));
                 }
+            }
+        };
+    };
+
+    // A person's movies and series
+    Screens.person = function (params) {
+        var p = params.person, items = {};
+        return {
+            initialFocus: '.grid .card',
+            render: async function () {
+                var res = await Promise.all([Api.item(p.Id).catch(function () { return null; }), Api.personItems(p.Id)]);
+                var info = res[0] || p;
+                var list = (res[1] && res[1].Items) || [];
+                list.forEach(function (x) { items[x.Id] = x; });
+                var img = Api.personImageUrl(info.ImageTags ? info : p, 480);
+                var meta = [];
+                if (info.PremiereDate) meta.push(String(info.PremiereDate).slice(0, 4) + (info.EndDate ? '–' + String(info.EndDate).slice(0, 4) : ''));
+                if (info.ProductionLocations && info.ProductionLocations.length) meta.push(info.ProductionLocations[0]);
+                var html = '<div class="screen" data-scroll="y"><header class="topbar"><div class="logo">TvFin</div><div class="who">' + esc(p.Name) + '</div></header>' +
+                    '<div class="person-top"><div class="person-img"><span class="poster-fallback initials">' + initials(p.Name) + '</span>' +
+                    (img ? '<img class="poster-img" src="' + esc(img) + '" onerror="App.imgErr(this)" alt="">' : '') + '</div>' +
+                    '<div class="person-info"><h1>' + esc(p.Name) + '</h1>' +
+                    (meta.length ? '<div class="detail-meta">' + meta.map(esc).join('<span class="dot">·</span>') + '</div>' : '') +
+                    (info.Overview ? '<div class="detail-overview">' + esc(String(info.Overview).replace(/<[^>]+>/g, '')) + '</div>' : '') +
+                    '</div></div>';
+                html += list.length
+                    ? '<div class="grid">' + list.map(function (x) { return card(x, isWide(x), 'lib'); }).join('') + '</div>'
+                    : '<p class="muted pad">' + esc(t('empty')) + '</p>';
+                return html + '</div>';
+            },
+            action: function (a, el) {
+                if (a === 'item') openItem(items[el.getAttribute('data-id')]);
             }
         };
     };

@@ -1,7 +1,7 @@
 /* Jellyfin API client. Written without ?. and ?? so it runs on older Tizen TVs. */
 var Api = (function () {
     var CLIENT = 'TvFin';
-    var VERSION = '1.5.0';
+    var VERSION = '1.6.0';
     var STORE_KEY = 'tvfin';
     var isTizen = !!window.tizen;
 
@@ -275,6 +275,23 @@ var Api = (function () {
         return latestVersion && newer(latestVersion, VERSION) ? latestVersion : null;
     }
 
+    // "More like this" (episodes use their series)
+    function similar(it) {
+        var id = it.Type === 'Episode' && it.SeriesId ? it.SeriesId : it.Id;
+        return request('GET', '/Items/' + id + '/Similar?userId=' + state.userId + '&Limit=16&' + FIELDS);
+    }
+    // Movies and series a person appears in, newest first
+    function personItems(personId) {
+        var q = 'PersonIds=' + personId + '&Recursive=true&IncludeItemTypes=Movie,Series,Video,MusicVideo' +
+            '&SortBy=PremiereDate,ProductionYear,SortName&SortOrder=Descending&Limit=200&' + FIELDS;
+        return firstOk('GET', ['/Items?userId=' + state.userId + '&' + q, '/Users/' + state.userId + '/Items?' + q]);
+    }
+    function personImageUrl(p, height) {
+        var tag = p.PrimaryImageTag || (p.ImageTags && p.ImageTags.Primary);
+        if (!tag) return null;
+        return state.server + '/Items/' + p.Id + '/Images/Primary?fillHeight=' + (height || 360) + '&quality=85&tag=' + tag + '&api_key=' + state.token;
+    }
+
     function favorites() {
         var q = 'Filters=IsFavorite&Recursive=true&IncludeItemTypes=Movie,Series,Episode,Video,MusicVideo&SortBy=SortName&Limit=40&' + FIELDS;
         return firstOk('GET', ['/Items?userId=' + state.userId + '&' + q, '/Users/' + state.userId + '/Items?' + q]);
@@ -490,6 +507,7 @@ var Api = (function () {
         qcInitiate: qcInitiate, qcCheck: qcCheck, qcAuthenticate: qcAuthenticate,
         resume: resume, nextUp: nextUp, views: views, latest: latest, favorites: favorites, children: children,
         segments: segments, checkUpdate: checkUpdate, version: VERSION,
+        similar: similar, personItems: personItems, personImageUrl: personImageUrl,
         switchTo: switchTo, removeAccount: removeAccount, isCurrent: isCurrent, userImageUrl: userImageUrl, item: item, imageUrls: imageUrls, bannerUrls: bannerUrls, chapterImageUrl: chapterImageUrl, backdropUrl: backdropUrl,
         setPlayed: setPlayed, setFavorite: setFavorite, search: search, nextEpisode: nextEpisode,
         subtitleUrl: subtitleUrl, savePrefs: savePrefs, SORTS: SORTS,
