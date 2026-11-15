@@ -127,6 +127,8 @@ body:not(.playing) #av-player { display: none; }
 /* ---------- Rows and cards ---------- */
 .row { margin-top: 26px; }
 .row h2 { font-size: 32px; margin: 0 80px 14px; font-weight: 600; }
+.row-link { display: inline-block; margin-left: -16px; padding: 4px 16px; border-radius: 10px; cursor: pointer; transition: background .12s; }
+.row-link.focused { background: #fff; color: #111; }
 .row-items {
     white-space: nowrap;
     overflow: hidden;

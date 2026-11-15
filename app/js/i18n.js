@@ -28,7 +28,7 @@ var I18n = (function () {
             ascending: 'Stigende', descending: 'Faldende',
             view: 'Visning', view_auto: 'Automatisk', view_poster: 'Plakater', view_posterCard: 'Plakatkort',
             view_thumb: 'Tommel', view_thumbCard: 'Tommel kort', view_banner: 'Banner', view_list: 'Liste',
-            favorites: 'Favoritter', latest_in: 'Senest tilføjet i {name}', whos_watching: 'Hvem ser med?',
+            favorites: 'Favoritter', latest_in: 'Nyligt tilføjet i {name}', whos_watching: 'Hvem ser med?',
             add_user: 'Tilføj bruger', sign_out_user: 'Log {name} ud',
             skip_intro: 'Spring intro over', skip_recap: 'Spring resumé over', skip_preview: 'Spring forsmag over',
             skip_credits: 'Spring rulletekster over', cast: 'Medvirkende', more_like_this: 'Mere som dette', back_hide: 'Tilbage skjul', update_available: 'Ny version {v} af TvFin er klar – kør ./update.sh på serveren'

@@ -152,9 +152,13 @@ var App = (function () {
     }
 
     // wide: true/false, or 'auto' to pick per item (posters for movies/series, thumbs for episodes)
-    function row(title, items, wide, key) {
+    // link: optional { action, id } – makes the heading a focusable "Title ›" link
+    function row(title, items, wide, key, link) {
         if (!items.length) return '';
-        return '<section class="row"><h2>' + esc(title) + '</h2><div class="row-items" data-scroll="x">' +
+        var head = link
+            ? '<span class="row-link focusable" data-action="' + link.action + '" data-id="' + esc(link.id) + '" data-key="hdr-' + esc(key) + '">' + esc(title) + ' ›</span>'
+            : esc(title);
+        return '<section class="row"><h2>' + head + '</h2><div class="row-items" data-scroll="x">' +
             items.map(function (it) { return card(it, wide === 'auto' ? isWide(it) : wide, key); }).join('') + '</div></section>';
     }
 
@@ -396,7 +400,7 @@ var App = (function () {
                 latestLibs.forEach(function (v, i) {
                     var list = more[i + 1];
                     list = keep((list && list.Items) || list || []);
-                    html += row(t('latest_in', { name: v.Name }), list, 'auto', 'latest-' + v.Id);
+                    html += row(t('latest_in', { name: v.Name }), list, 'auto', 'latest-' + v.Id, { action: 'latest', id: v.Id });
                 });
                 if (!resume.length && !next.length && !libs.length) html += '<p class="muted pad">' + esc(t('no_libraries')) + '</p>';
                 return html + '</div>';
@@ -412,6 +416,9 @@ var App = (function () {
             action: async function (a, el) {
                 if (a === 'users') {
                     go('users');
+                } else if (a === 'latest') {
+                    // "Latest in X ›": open the library sorted by date added (newest first), without changing its saved sort
+                    go('library', { item: items[el.getAttribute('data-id')], sort: { key: 'added', desc: true } });
                 } else if (a === 'search') {
                     go('search', { q: '' });
                 } else if (a === 'lang') {
@@ -489,7 +496,7 @@ var App = (function () {
         var sortable = parent.Type !== 'Series' && parent.Type !== 'Season';
         return {
             render: async function () {
-                var sort = sortable ? getSort(parent.Id) : null;
+                var sort = sortable ? (params.sort || getSort(parent.Id)) : null;
                 var view = getView(parent.Id);
                 var r = await Api.children(parent, sort);
                 var list = r.Items || [];
@@ -521,12 +528,14 @@ var App = (function () {
                     refresh();
                 }
                 else if (a === 'sort') {
-                    var cur = getSort(parent.Id);
+                    var cur = params.sort || getSort(parent.Id);
+                    delete params.sort;
                     var key = SORT_ORDER[(SORT_ORDER.indexOf(cur.key) + 1) % SORT_ORDER.length];
                     setSort(parent.Id, { key: key, desc: Api.SORTS[key].desc });
                     refresh();
                 } else if (a === 'order') {
-                    var s = getSort(parent.Id);
+                    var s = params.sort || getSort(parent.Id);
+                    delete params.sort;
                     setSort(parent.Id, { key: s.key, desc: !s.desc });
                     refresh();
                 }

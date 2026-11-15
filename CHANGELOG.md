@@ -4,6 +4,11 @@
 
 All changes to TvFin. Update the TV by running `./update.sh` on the server.
 
+## 1.6.2 – 2026-11-15
+
+### Added
+- The *Latest in …* headings on the home screen are now links (**Latest in YouTube ›**): select one to open that library sorted by date added, newest first. The library's own saved sorting is left as it was.
+
 ## 1.6.1 – 2026-11-15
 
 ### Changed

@@ -4,6 +4,12 @@
 
 Alle ændringer i TvFin. Opdater TV'et med `./update.sh` på serveren.
 
+## 1.6.2 – 2026-11-15
+
+### Nyt
+- Overskrifterne *Nyligt tilføjet i …* på forsiden er nu links (**Nyligt tilføjet i YouTube ›**): vælg en for at åbne biblioteket sorteret efter dato tilføjet, nyeste først. Bibliotekets egen gemte sortering bliver ikke ændret.
+- Den danske tekst hedder nu "Nyligt tilføjet i …" ligesom i Jellyfin.
+
 ## 1.6.1 – 2026-11-15
 
 ### Ændret
