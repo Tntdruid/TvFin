@@ -1,7 +1,7 @@
 /* Jellyfin API client. Written without ?. and ?? so it runs on older Tizen TVs. */
 var Api = (function () {
     var CLIENT = 'TvFin';
-    var VERSION = '1.6.3';
+    var VERSION = '1.7.0';
     var STORE_KEY = 'tvfin';
     var isTizen = !!window.tizen;
 
@@ -307,15 +307,22 @@ var Api = (function () {
     };
 
     // sort: { key, desc } – omitted for episodes/seasons, which are always in order
+    // parent.studioId: only videos from that studio/channel (e.g. a YouTube channel), anywhere in the library
     function children(parent, sort) {
         var q = 'ParentId=' + parent.Id + '&Limit=1000&' + FIELDS;
         var s = sort && SORTS[sort.key];
         var sortQ = s ? '&SortBy=' + s.by + '&SortOrder=' + (sort.desc ? 'Descending' : 'Ascending') : '&SortBy=SortName';
-        if (parent.CollectionType === 'movies') q += '&Recursive=true&IncludeItemTypes=Movie' + sortQ;
+        if (parent.studioId) q += '&StudioIds=' + parent.studioId + '&Recursive=true&IncludeItemTypes=Movie,Video,Episode,MusicVideo' + sortQ;
+        else if (parent.CollectionType === 'movies') q += '&Recursive=true&IncludeItemTypes=Movie' + sortQ;
         else if (parent.CollectionType === 'tvshows') q += '&Recursive=true&IncludeItemTypes=Series' + sortQ;
         else if (s) q += sortQ;
         else q += '&SortBy=ParentIndexNumber,IndexNumber,SortName';
         return firstOk('GET', ['/Items?userId=' + state.userId + '&' + q, '/Users/' + state.userId + '/Items?' + q]);
+    }
+    // Studios in a library – for YouTube downloads these are the channels
+    function studios(parentId) {
+        var q = 'ParentId=' + parentId + '&Recursive=true&SortBy=SortName&Limit=1000&EnableImageTypes=Primary,Thumb&ImageTypeLimit=1';
+        return firstOk('GET', ['/Studios?userId=' + state.userId + '&' + q, '/Studios?' + q]);
     }
     function search(term) {
         var q = 'searchTerm=' + encodeURIComponent(term) + '&Recursive=true&IncludeItemTypes=Movie,Series,Episode,Video,MusicVideo&Limit=60&' + FIELDS;
@@ -507,7 +514,7 @@ var Api = (function () {
         qcInitiate: qcInitiate, qcCheck: qcCheck, qcAuthenticate: qcAuthenticate,
         resume: resume, nextUp: nextUp, views: views, latest: latest, favorites: favorites, children: children,
         segments: segments, checkUpdate: checkUpdate, version: VERSION,
-        similar: similar, personItems: personItems, personImageUrl: personImageUrl,
+        similar: similar, personItems: personItems, personImageUrl: personImageUrl, studios: studios,
         switchTo: switchTo, removeAccount: removeAccount, isCurrent: isCurrent, userImageUrl: userImageUrl, item: item, imageUrls: imageUrls, bannerUrls: bannerUrls, chapterImageUrl: chapterImageUrl, backdropUrl: backdropUrl,
         setPlayed: setPlayed, setFavorite: setFavorite, search: search, nextEpisode: nextEpisode,
         subtitleUrl: subtitleUrl, savePrefs: savePrefs, SORTS: SORTS,

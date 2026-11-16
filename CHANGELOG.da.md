@@ -4,6 +4,13 @@
 
 Alle ændringer i TvFin. Opdater TV'et med `./update.sh` på serveren.
 
+## 1.7.0 – 2026-11-16
+
+### Nyt
+- **Gruppér et bibliotek efter kanal:** knappen *📺 Gruppér* i et bibliotek skifter mellem *Ingen* og *Kanal*. Med *Kanal* ser du ét kort pr. kanal (Jellyfins *studie* – for downloadede YouTube-videoer er det kanalen), og vælger du en, ser du kun den kanals videoer, uanset hvor i biblioteket de ligger. Der skal ikke flyttes noget på serveren.
+  - Huskes pr. bibliotek; hver kanal har sin egen sortering og visning.
+  - *Nyligt tilføjet i … ›* åbner stadig de nyeste videoer, ikke kanallisten.
+
 ## 1.6.3 – 2026-11-15
 
 ### Nyt

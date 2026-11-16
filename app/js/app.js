@@ -499,18 +499,55 @@ var App = (function () {
         try { localStorage.setItem(VIEW_KEY, JSON.stringify(all)); } catch (e) { /* ignore */ }
     }
 
+    // Group a library by channel (studio) – remembered per library
+    var GROUP_KEY = 'tvfin-group';
+    function loadGroups() { try { return JSON.parse(localStorage.getItem(GROUP_KEY) || '{}'); } catch (e) { return {}; } }
+    function getGroup(id) { return loadGroups()[id] || 'none'; }
+    function setGroup(id, g) {
+        var all = loadGroups();
+        all[id] = g;
+        try { localStorage.setItem(GROUP_KEY, JSON.stringify(all)); } catch (e) { /* ignore */ }
+    }
+
+    // Channel card: logo if the studio has one, otherwise initials
+    function channelCard(st) {
+        var urls = Api.imageUrls(st, false, 360);
+        return '<div class="card channel focusable" data-action="channel" data-id="' + esc(st.Id) + '" data-key="ch-' + esc(st.Id) + '">' +
+            '<div class="poster"><span class="poster-fallback initials">' + initials(st.Name) + '</span>' +
+            (urls.length ? '<img class="poster-img" src="' + esc(urls[0]) + '" data-alt="' + esc(urls.slice(1).join('|')) + '" onerror="App.imgErr(this)" alt="">' : '') +
+            '</div><div class="card-title">' + esc(st.Name) + '</div></div>';
+    }
+
     Screens.library = function (params) {
-        var parent = params.item, items = {};
+        var parent = params.item, items = {}, channels = {};
         var sortable = parent.Type !== 'Series' && parent.Type !== 'Season';
+        // Saved sort/view are per folder, and per channel inside a library
+        var key = parent.studioId ? parent.Id + ':' + parent.studioId : parent.Id;
+        // Only whole libraries (not shows, which are already grouped by series) can be grouped by channel
+        var groupable = !parent.studioId && (parent.Type === 'CollectionFolder' || parent.Type === 'UserView') && parent.CollectionType !== 'tvshows';
         return {
             render: async function () {
-                var sort = sortable ? (params.sort || getSort(parent.Id)) : null;
-                var view = getView(parent.Id);
+                // Opened from "Latest in … ›" (params.sort): show the newest videos, not the channel list
+                var grouped = groupable && !params.sort && getGroup(parent.Id) === 'channel';
+                var sort = sortable ? (params.sort || getSort(key)) : null;
+                var view = getView(key);
+                var head = parent.SeriesName ? parent.SeriesName + ' – ' + parent.Name : parent.Name;
+                var html = '<div class="screen" data-scroll="y"><header class="topbar"><div class="logo">TvFin</div><div class="who">' + esc(head) + '</div>';
+                if (groupable) {
+                    html += '<div class="btn small focusable" data-action="group" data-key="group">📺 ' + esc(t('group')) + ': ' +
+                        esc(grouped ? t('group_channel') : t('group_none')) + '</div>';
+                }
+                if (grouped) {
+                    var rs = await Api.studios(parent.Id);
+                    var sts = (rs && rs.Items) || [];
+                    sts.forEach(function (st) { channels[st.Id] = st; });
+                    html += '</header><div class="grid">' + sts.map(channelCard).join('') + '</div>';
+                    if (!sts.length) html += '<p class="muted pad">' + esc(t('no_channels')) + '</p>';
+                    return html + '</div>';
+                }
                 var r = await Api.children(parent, sort);
                 var list = r.Items || [];
                 list.forEach(function (it) { items[it.Id] = it; });
-                var head = parent.SeriesName ? parent.SeriesName + ' – ' + parent.Name : parent.Name;
-                var html = '<div class="screen" data-scroll="y"><header class="topbar"><div class="logo">TvFin</div><div class="who">' + esc(head) + '</div>';
                 html += '<div class="btn small focusable" data-action="view" data-key="view">▦ ' + esc(t('view')) + ': ' + esc(t('view_' + view)) + '</div>';
                 if (sortable) {
                     html += '<div class="btn small focusable" data-action="sort" data-key="sort">⇅ ' + esc(t('sort')) + ': ' + esc(t('sort_' + sort.key)) + '</div>';
@@ -527,24 +564,29 @@ var App = (function () {
                 if (!list.length) html += '<p class="muted pad">' + esc(t('empty')) + '</p>';
                 return html + '</div>';
             },
-            initialFocus: '.grid [data-action="item"]',
+            initialFocus: '.grid [data-action="item"], .grid [data-action="channel"]',
             action: function (a, el) {
                 if (a === 'item') openItem(items[el.getAttribute('data-id')]);
-                else if (a === 'view') {
-                    var v = getView(parent.Id);
-                    setView(parent.Id, VIEW_ORDER[(VIEW_ORDER.indexOf(v) + 1) % VIEW_ORDER.length]);
+                else if (a === 'channel') {
+                    var st = channels[el.getAttribute('data-id')];
+                    go('library', { item: { Id: parent.Id, Name: st.Name, Type: 'Channel', CollectionType: parent.CollectionType, studioId: st.Id } });
+                } else if (a === 'group') {
+                    setGroup(parent.Id, getGroup(parent.Id) === 'channel' ? 'none' : 'channel');
                     refresh();
-                }
-                else if (a === 'sort') {
-                    var cur = params.sort || getSort(parent.Id);
+                } else if (a === 'view') {
+                    var v = getView(key);
+                    setView(key, VIEW_ORDER[(VIEW_ORDER.indexOf(v) + 1) % VIEW_ORDER.length]);
+                    refresh();
+                } else if (a === 'sort') {
+                    var cur = params.sort || getSort(key);
                     delete params.sort;
-                    var key = SORT_ORDER[(SORT_ORDER.indexOf(cur.key) + 1) % SORT_ORDER.length];
-                    setSort(parent.Id, { key: key, desc: Api.SORTS[key].desc });
+                    var k = SORT_ORDER[(SORT_ORDER.indexOf(cur.key) + 1) % SORT_ORDER.length];
+                    setSort(key, { key: k, desc: Api.SORTS[k].desc });
                     refresh();
                 } else if (a === 'order') {
-                    var s = params.sort || getSort(parent.Id);
+                    var s = params.sort || getSort(key);
                     delete params.sort;
-                    setSort(parent.Id, { key: s.key, desc: !s.desc });
+                    setSort(key, { key: s.key, desc: !s.desc });
                     refresh();
                 }
             }

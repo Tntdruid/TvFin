@@ -427,6 +427,11 @@ body:not(.playing) #upnext-card { display: none; }
     font-size: 24px;
 }
 
+/* Channels (studios) */
+.card.channel { width: 240px; }
+.card.channel .poster { padding-top: 100%; border-radius: 50%; }
+.card.channel .card-title { text-align: center; }
+
 /* Cast and person page */
 .card.person { width: 220px; }
 .poster-fallback.initials { font-size: 64px; font-weight: 700; color: #5d6380; }

@@ -4,6 +4,13 @@
 
 All changes to TvFin. Update the TV by running `./update.sh` on the server.
 
+## 1.7.0 – 2026-11-16
+
+### Added
+- **Group a library by channel:** the *📺 Group* button in a library switches between *None* and *Channel*. With *Channel* you see one card per channel (Jellyfin's *studio* – for downloaded YouTube videos that's the channel), and selecting one shows only that channel's videos, from anywhere in the library. Nothing has to be moved on the server.
+  - Remembered per library; each channel has its own sorting and view.
+  - *Latest in … ›* still opens the newest videos, not the channel list.
+
 ## 1.6.3 – 2026-11-15
 
 ### Added
