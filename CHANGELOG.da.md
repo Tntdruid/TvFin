@@ -4,6 +4,15 @@
 
 Alle ændringer i TvFin. Opdater TV'et med `./update.sh` på serveren.
 
+## 1.8.0 – 2026-11-16
+
+### Nyt
+- **Funscript-sessioner på tv'et:** afspil gemte sessioner fra Funscript Session-appen på PC'en.
+  - Parring som Quick Connect: *Hvem ser med? → 🎬 Tilslut Funscript*, indtast PC'ens adresse (står i Funscript under *Fjernbetjening*), og tryk **Tillad** i Funscript på PC'en. Gemmes pr. TvFin-bruger; derefter er der en *🎬 Funscript*-knap på forsiden.
+  - Sessionens klip afspilles efter hinanden; ◀ ▶ spol 10 sek, ▲ næste klip, ▼ forrige klip, OK pause, Tilbage stop.
+  - **Handy** (API v3, HSSP): sender du Handy-opsætningen med, når du godkender tv'et, følger Handy'en sessionens script – den pauser ved klipskift og synkroniseres igen, og rettes hvis den glider.
+  - Kræver den tilhørende Funscript-opdatering (tv-endpoints på dens fjernbetjeningsserver).
+
 ## 1.7.0 – 2026-11-16
 
 ### Nyt

@@ -7,6 +7,7 @@
 - Afspiller med Samsungs AVPlay (direkte afspilning af mkv/mp4/HEVC m.m., ellers omkoder serveren til HLS)
 - Infoside med kapitler, lyd/undertekst-valg, automatisk næste afsnit, søgning, sortering, visninger, favoritter og senest tilføjet, flere brugere og 5 sprog – se [CHANGELOG.da.md](CHANGELOG.da.md)
 - **Medvirkende** med billeder, skuespillersider med deres film og serier, og **Mere som dette**
+- **Funscript-sessioner** fra PC-appen [Funscript Session](https://github.com/Tntdruid/funscript-session), med Handy'en i sync
 - **Spring intro / rulletekster over** – kræver Jellyfin 10.10+ med en udbyder af mediesegmenter (fx [Intro Skipper](https://github.com/intro-skipper/intro-skipper)-pluginet)
 - Viser på forsiden, når der er en nyere TvFin på GitHub
 - **Husker hvor du er nået til** – positionen gemmes på Jellyfin-serveren (hvert 10. sek, ved pause, spol og stop), så den også passer med telefonen osv.

@@ -4,6 +4,15 @@
 
 All changes to TvFin. Update the TV by running `./update.sh` on the server.
 
+## 1.8.0 – 2026-11-16
+
+### Added
+- **Funscript sessions on the TV:** play saved sessions from the Funscript Session app on the PC.
+  - Pairing like Quick Connect: *Who's watching? → 🎬 Connect Funscript*, enter the PC's address (shown in Funscript under *Remote*), and press **Allow** in Funscript on the PC. Saved per TvFin user; a *🎬 Funscript* button then appears on the home screen.
+  - The session's clips play one after another; ◀ ▶ seek 10 s, ▲ next clip, ▼ previous clip, OK pause, Back stop.
+  - **Handy** (API v3, HSSP): if you choose to send the Handy set-up along when allowing the TV, the Handy follows the session script – it pauses at clip changes and resyncs, and is corrected if it drifts.
+  - Needs the matching Funscript update (TV endpoints on its phone-remote server).
+
 ## 1.7.0 – 2026-11-16
 
 ### Added

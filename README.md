@@ -7,6 +7,7 @@
 - Playback through Samsung's AVPlay (direct play of mkv/mp4/HEVC etc., otherwise the server transcodes to HLS)
 - Info page with chapters, audio/subtitle selection, auto-play next episode, search, sorting, view modes, favorites and latest rows, several users and 5 UI languages – see [CHANGELOG.md](CHANGELOG.md)
 - **Cast** with photos, actor pages with their movies and series, and **More like this**
+- **Funscript sessions** from the [Funscript Session](https://github.com/Tntdruid/funscript-session) PC app, with the Handy in sync
 - **Skip intro / credits** – needs Jellyfin 10.10+ with a media segment provider (e.g. the [Intro Skipper](https://github.com/intro-skipper/intro-skipper) plugin)
 - Tells you on the home screen when a newer TvFin is on GitHub
 - **Remembers where you left off** – the position is stored on the Jellyfin server (every 10 s, and on pause, seek and stop), so it stays in sync with your phone and other clients.

@@ -31,7 +31,18 @@ var I18n = (function () {
             favorites: 'Favoritter', latest_in: 'Nyligt tilføjet i {name}', whos_watching: 'Hvem ser med?',
             add_user: 'Tilføj bruger', sign_out_user: 'Log {name} ud',
             skip_intro: 'Spring intro over', skip_recap: 'Spring resumé over', skip_preview: 'Spring forsmag over',
-            skip_credits: 'Spring rulletekster over', cast: 'Medvirkende', more_like_this: 'Mere som dette', back_hide: 'Tilbage skjul', group: 'Gruppér', group_channel: 'Kanal', group_none: 'Ingen', no_channels: 'Ingen kanaler fundet (videoerne har intet studie/kanal i Jellyfin).', update_available: 'Ny version {v} af TvFin er klar – kør ./update.sh på serveren'
+            skip_credits: 'Spring rulletekster over', cast: 'Medvirkende', more_like_this: 'Mere som dette', back_hide: 'Tilbage skjul',
+            fun_connect_btn: 'Tilslut Funscript', fun_connect_title: 'Forbind til Funscript på PC\'en',
+            fun_connect_hint: 'Slå "Styr fra mobilen" til i Funscript-appen, og indtast adressen der står under Fjernbetjening (fx 192.168.1.20:8001).',
+            fun_pair_code: 'Tryk Tillad i Funscript-appen på PC\'en. Koden er:', fun_waiting: 'Venter på godkendelse…',
+            fun_denied: 'Tv\'et blev afvist på PC\'en.', fun_expired: 'Anmodningen udløb – prøv igen.',
+            fun_unreachable: 'Kunne ikke nå Funscript på {s}. Er "Styr fra mobilen" slået til, og kører appen?',
+            fun_sessions: 'Sessioner', fun_no_sessions: 'Ingen gemte sessioner endnu – byg en i Funscript-appen.',
+            fun_no_clips: 'Sessionen har ingen klip.', fun_forget: 'Glem forbindelse', fun_clip: 'Klip {i}/{n}', fun_clips: 'klip',
+            fun_hint: '◀ ▶ spol 10 sek · ▲ næste klip · ▼ forrige klip · OK pause · Tilbage stop',
+            handy_ready: 'Handy klar', handy_none: 'uden Handy', handy_on: 'Handy', handy_error: 'Handy: {e}',
+            handy_offline: 'Handy er ikke online – tjek at den er på wifi', handy_bad_app: 'Ugyldigt Application ID',
+            handy_too_long: 'Sessionen er for lang til Handy', handy_upload_failed: 'Upload af script til Handy fejlede', group: 'Gruppér', group_channel: 'Kanal', group_none: 'Ingen', no_channels: 'Ingen kanaler fundet (videoerne har intet studie/kanal i Jellyfin).', update_available: 'Ny version {v} af TvFin er klar – kør ./update.sh på serveren'
         },
         en: {
             _name: 'English',
@@ -63,7 +74,18 @@ var I18n = (function () {
             favorites: 'Favorites', latest_in: 'Latest in {name}', whos_watching: "Who's watching?",
             add_user: 'Add user', sign_out_user: 'Sign out {name}',
             skip_intro: 'Skip intro', skip_recap: 'Skip recap', skip_preview: 'Skip preview',
-            skip_credits: 'Skip credits', cast: 'Cast', more_like_this: 'More like this', back_hide: 'Back hide', group: 'Group', group_channel: 'Channel', group_none: 'None', no_channels: 'No channels found (the videos have no studio/channel in Jellyfin).', update_available: 'TvFin {v} is available – run ./update.sh on the server'
+            skip_credits: 'Skip credits', cast: 'Cast', more_like_this: 'More like this', back_hide: 'Back hide',
+            fun_connect_btn: 'Connect Funscript', fun_connect_title: 'Connect to Funscript on the PC',
+            fun_connect_hint: 'Turn on "Control from phone" in the Funscript app, and enter the address shown under Remote (e.g. 192.168.1.20:8001).',
+            fun_pair_code: 'Press Allow in the Funscript app on the PC. The code is:', fun_waiting: 'Waiting for approval…',
+            fun_denied: 'The TV was denied on the PC.', fun_expired: 'The request expired – try again.',
+            fun_unreachable: 'Could not reach Funscript at {s}. Is "Control from phone" on, and is the app running?',
+            fun_sessions: 'Sessions', fun_no_sessions: 'No saved sessions yet – build one in the Funscript app.',
+            fun_no_clips: 'The session has no clips.', fun_forget: 'Forget connection', fun_clip: 'Clip {i}/{n}', fun_clips: 'clips',
+            fun_hint: '◀ ▶ seek 10 sec · ▲ next clip · ▼ previous clip · OK pause · Back stop',
+            handy_ready: 'Handy ready', handy_none: 'no Handy', handy_on: 'Handy', handy_error: 'Handy: {e}',
+            handy_offline: 'Handy is not online – check that it is on WiFi', handy_bad_app: 'Invalid Application ID',
+            handy_too_long: 'The session is too long for the Handy', handy_upload_failed: 'Uploading the script to the Handy failed', group: 'Group', group_channel: 'Channel', group_none: 'None', no_channels: 'No channels found (the videos have no studio/channel in Jellyfin).', update_available: 'TvFin {v} is available – run ./update.sh on the server'
         },
         de: {
             _name: 'Deutsch',

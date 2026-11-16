@@ -721,6 +721,8 @@ var Player = (function () {
 
     return {
         start: start, stop: stop, onKey: onKey, fmt: fmt,
+        // A fresh video backend (AVPlay on the TV, <video> in a browser) – used by the Funscript player
+        makeBackend: function () { return Api.isTizen && window.webapis && webapis.avplay ? new AvPlayBackend() : new HtmlBackend(); },
         get active() { return active; }
     };
 })();

@@ -398,6 +398,7 @@ var App = (function () {
                 var html = '<div class="screen" data-scroll="y"><header class="topbar"><div class="logo">TvFin</div>' +
                     '<div class="who">' + esc(Api.state.serverName || '') + '</div>' +
                     '<div class="btn small focusable" data-action="search" data-key="search">🔍 ' + esc(t('search')) + '</div>' +
+                    (Fun.config() ? '<div class="btn small focusable" data-action="funscript" data-key="funscript">🎬 Funscript</div>' : '') +
                     '<div class="btn small focusable" data-action="lang" data-key="lang">🌐 ' + esc(I18n.name) + '</div>' +
                     '<div class="btn small focusable user-btn" data-action="users" data-key="users">' + avatar(acc, 'mini') + esc(Api.state.userName || '') + '</div></header>' +
                     '<div id="update-banner" class="update-banner hidden"></div>';
@@ -429,6 +430,8 @@ var App = (function () {
                     go('library', { item: items[el.getAttribute('data-id')], sort: { key: 'added', desc: true } });
                 } else if (a === 'search') {
                     go('search', { q: '' });
+                } else if (a === 'funscript') {
+                    go('funscript');
                 } else if (a === 'lang') {
                     switchLanguage();
                 } else if (a === 'item') {
@@ -456,7 +459,9 @@ var App = (function () {
                     '</div>';
                 if (Api.state.token) {
                     html += '<div class="btn small focusable" data-action="logout" data-key="logout">' +
-                        esc(t('sign_out_user', { name: Api.state.userName || '' })) + '</div>';
+                        esc(t('sign_out_user', { name: Api.state.userName || '' })) + '</div>' +
+                        '<div class="btn small focusable" data-action="funscript" data-key="funscript">🎬 ' +
+                        esc(Fun.config() ? 'Funscript' : t('fun_connect_btn')) + '</div>';
                 }
                 return html + '</div>';
             },
@@ -468,6 +473,8 @@ var App = (function () {
                     go('home');
                 } else if (a === 'add') {
                     go(Api.state.server ? 'login' : 'server');
+                } else if (a === 'funscript') {
+                    go(Fun.config() ? 'funscript' : 'funpair');
                 } else if (a === 'logout') {
                     await Api.logout();
                     stack = [];
@@ -739,6 +746,100 @@ var App = (function () {
         };
     };
 
+    // ---------- Funscript (the PC app) ----------
+    // Pairing like Quick Connect: enter the PC's address, the TV shows a code, the user allows it on the PC
+    Screens.funpair = function () {
+        var pollTimer = null, alive = true;
+        function stopPoll() { clearInterval(pollTimer); pollTimer = null; }
+        return {
+            initialFocus: '#fun-input',
+            render: function () {
+                return '<div class="center-box">' +
+                    '<div class="logo big">🎬 Funscript</div>' +
+                    '<h1>' + esc(t('fun_connect_title')) + '</h1>' +
+                    '<p class="muted">' + esc(t('fun_connect_hint')) + '</p>' +
+                    '<input id="fun-input" class="input focusable" data-key="input" data-submit="connect" type="text" placeholder="192.168.1.20:8001" autocomplete="off">' +
+                    '<div class="btn focusable primary" data-action="connect" data-key="connect">' + esc(t('connect')) + '</div>' +
+                    '<div id="fun-code-box" class="hidden"><p class="muted">' + esc(t('fun_pair_code')) + '</p><div class="qc-code" id="fun-code"></div></div>' +
+                    '<p class="error" id="fun-msg"></p></div>';
+            },
+            destroy: function () { alive = false; stopPoll(); },
+            action: async function (a) {
+                if (a !== 'connect') return;
+                stopPoll();
+                var msg = document.getElementById('fun-msg');
+                var input = document.getElementById('fun-input').value;
+                var url = Fun.baseUrl(input);
+                if (!url) return;
+                msg.textContent = t('connecting');
+                try {
+                    var p = await Fun.pair(url);
+                    if (!alive) return;
+                    document.getElementById('fun-code').textContent = p.code;
+                    document.getElementById('fun-code-box').classList.remove('hidden');
+                    msg.textContent = t('fun_waiting');
+                    pollTimer = setInterval(async function () {
+                        try {
+                            var st = await Fun.pairStatus(url, p.id);
+                            if (!alive || st.status === 'pending') return;
+                            stopPoll();
+                            if (st.status === 'approved') {
+                                Fun.save({ url: url, key: st.key, handy: st.handy || null });
+                                go('funscript', {}, true);
+                            } else {
+                                document.getElementById('fun-code-box').classList.add('hidden');
+                                msg.textContent = st.status === 'denied' ? t('fun_denied') : t('fun_expired');
+                            }
+                        } catch (e) { /* keep trying */ }
+                    }, 2000);
+                } catch (e) {
+                    msg.textContent = t('fun_unreachable', { s: url });
+                }
+            }
+        };
+    };
+
+    // Saved sessions from the PC app
+    Screens.funscript = function () {
+        var cfg = Fun.config();
+        return {
+            initialFocus: '.grid [data-action="fun-play"]',
+            render: async function () {
+                if (!cfg) { go('funpair', {}, true); return ''; }
+                var html = '<div class="screen" data-scroll="y"><header class="topbar"><div class="logo">TvFin</div>' +
+                    '<div class="who">🎬 Funscript · ' + esc(cfg.handy ? t('handy_ready') : t('handy_none')) + '</div>' +
+                    '<div class="btn small focusable" data-action="fun-forget" data-key="fun-forget">' + esc(t('fun_forget')) + '</div></header>';
+                var r;
+                try { r = await Fun.sessions(cfg); } catch (e) {
+                    if (e.status === 403) { Fun.save(null); go('funpair', {}, true); return ''; }
+                    return html + '<p class="error pad">' + esc(t('fun_unreachable', { s: cfg.url })) + '</p></div>';
+                }
+                var list = (r && r.sessions) || [];
+                html += '<section class="row"><h2>' + esc(t('fun_sessions')) + '</h2></section><div class="grid list">' + list.map(function (s) {
+                    var meta = [Player.fmt(s.totalMs), s.clipCount + ' ' + t('fun_clips')];
+                    if (s.createdAt) { var d = new Date(s.createdAt * 1000); meta.push(d.getDate() + '/' + (d.getMonth() + 1) + ' ' + d.getFullYear()); }
+                    return '<div class="list-item focusable" data-action="fun-play" data-id="' + s.id + '" data-key="fs-' + s.id + '">' +
+                        '<div class="list-img wide"><span class="poster-fallback">🎬</span>' +
+                        (s.thumbVideoId ? '<img class="poster-img" src="' + esc(Fun.thumbUrl(cfg, s.thumbVideoId)) + '" onerror="App.imgErr(this)" alt="">' : '') + '</div>' +
+                        '<div class="list-text"><div class="card-title">' + esc(s.name) + '</div><div class="card-sub">' + esc(meta.join('  ·  ')) + '</div></div></div>';
+                }).join('') + '</div>';
+                if (!list.length) html += '<p class="muted pad">' + esc(t('fun_no_sessions')) + '</p>';
+                return html + '</div>';
+            },
+            action: function (a, el) {
+                if (a === 'fun-play') {
+                    var entry = stack[stack.length - 1];
+                    if (entry && Nav.current) entry.focusKey = Nav.current.getAttribute('data-key');
+                    FunPlayer.start(cfg, el.getAttribute('data-id'), function () { render(); });
+                } else if (a === 'fun-forget') {
+                    Fun.save(null);
+                    stack = [];
+                    go('home');
+                }
+            }
+        };
+    };
+
     // A person's movies and series
     Screens.person = function (params) {
         var p = params.person, items = {};
@@ -852,6 +953,7 @@ var App = (function () {
     document.addEventListener('keydown', function (e) {
         var k = e.keyCode;
         if (Player.active) { if (Player.onKey(k)) e.preventDefault(); return; }
+        if (FunPlayer.active) { if (FunPlayer.onKey(k)) e.preventDefault(); return; }
 
         var ae = document.activeElement;
         if (ae && ae.tagName === 'INPUT') {
@@ -885,7 +987,7 @@ var App = (function () {
 
     // Mouse/click (handy when testing in a browser)
     document.addEventListener('click', function (e) {
-        if (Player.active) return;
+        if (Player.active || FunPlayer.active) return;
         var el = e.target.closest ? e.target.closest('.focusable') : null;
         if (!el) return;
         Nav.focus(el);
