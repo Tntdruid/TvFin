@@ -32,8 +32,8 @@ var I18n = (function () {
             add_user: 'Tilføj bruger', sign_out_user: 'Log {name} ud',
             skip_intro: 'Spring intro over', skip_recap: 'Spring resumé over', skip_preview: 'Spring forsmag over',
             skip_credits: 'Spring rulletekster over', cast: 'Medvirkende', more_like_this: 'Mere som dette', back_hide: 'Tilbage skjul',
-            fun_connect_btn: 'Tilslut Funscript', fun_connect_title: 'Forbind til Funscript på PC\'en',
-            fun_connect_hint: 'Slå "Styr fra mobilen" til i Funscript-appen, og indtast adressen der står under Fjernbetjening (fx 192.168.1.20:8001).',
+            fun_connect_btn: 'Tilslut Funscript', fun_searching: 'Søger efter Funscript på netværket…', fun_search_again: 'Søg igen', fun_found_none: 'Fandt ingen Funscript på netværket. Er "Styr fra mobilen" slået til? Du kan også skrive adressen.', fun_no_network: 'Kunne ikke finde tv\'ets netværk – skriv adressen.', settings: 'Indstillinger', change: 'Skift', open: 'Åbn', version: 'Version', fun_status_connected: 'Forbundet til {s}', fun_status_none: 'Ikke forbundet', fun_connect_title: 'Forbind til Funscript på PC\'en',
+            fun_connect_hint: 'Slå "Styr fra mobilen" til i Funscript-appen på PC\'en. Tv\'et finder den selv – ellers skriv adressen fra Fjernbetjening (fx 192.168.1.20:8001).',
             fun_pair_code: 'Tryk Tillad i Funscript-appen på PC\'en. Koden er:', fun_waiting: 'Venter på godkendelse…',
             fun_denied: 'Tv\'et blev afvist på PC\'en.', fun_expired: 'Anmodningen udløb – prøv igen.',
             fun_unreachable: 'Kunne ikke nå Funscript på {s}. Er "Styr fra mobilen" slået til, og kører appen?',
@@ -75,8 +75,8 @@ var I18n = (function () {
             add_user: 'Add user', sign_out_user: 'Sign out {name}',
             skip_intro: 'Skip intro', skip_recap: 'Skip recap', skip_preview: 'Skip preview',
             skip_credits: 'Skip credits', cast: 'Cast', more_like_this: 'More like this', back_hide: 'Back hide',
-            fun_connect_btn: 'Connect Funscript', fun_connect_title: 'Connect to Funscript on the PC',
-            fun_connect_hint: 'Turn on "Control from phone" in the Funscript app, and enter the address shown under Remote (e.g. 192.168.1.20:8001).',
+            fun_connect_btn: 'Connect Funscript', fun_searching: 'Looking for Funscript on the network…', fun_search_again: 'Search again', fun_found_none: 'Found no Funscript on the network. Is "Control from phone" on? You can also type the address.', fun_no_network: 'Could not find the TV\'s network – type the address.', settings: 'Settings', change: 'Change', open: 'Open', version: 'Version', fun_status_connected: 'Connected to {s}', fun_status_none: 'Not connected', fun_connect_title: 'Connect to Funscript on the PC',
+            fun_connect_hint: 'Turn on "Control from phone" in the Funscript app on the PC. The TV finds it by itself – otherwise type the address shown under Remote (e.g. 192.168.1.20:8001).',
             fun_pair_code: 'Press Allow in the Funscript app on the PC. The code is:', fun_waiting: 'Waiting for approval…',
             fun_denied: 'The TV was denied on the PC.', fun_expired: 'The request expired – try again.',
             fun_unreachable: 'Could not reach Funscript at {s}. Is "Control from phone" on, and is the app running?',
@@ -117,7 +117,7 @@ var I18n = (function () {
             favorites: 'Favoriten', latest_in: 'Neu in {name}', whos_watching: 'Wer schaut?',
             add_user: 'Benutzer hinzufügen', sign_out_user: '{name} abmelden',
             skip_intro: 'Intro überspringen', skip_recap: 'Rückblick überspringen', skip_preview: 'Vorschau überspringen',
-            skip_credits: 'Abspann überspringen', cast: 'Besetzung', more_like_this: 'Ähnliche Titel', back_hide: 'Zurück ausblenden', group: 'Gruppieren', group_channel: 'Kanal', group_none: 'Keine', no_channels: 'Keine Kanäle gefunden (die Videos haben kein Studio/keinen Kanal in Jellyfin).', update_available: 'TvFin {v} ist verfügbar – ./update.sh auf dem Server ausführen'
+            skip_credits: 'Abspann überspringen', cast: 'Besetzung', more_like_this: 'Ähnliche Titel', back_hide: 'Zurück ausblenden', group: 'Gruppieren', settings: 'Einstellungen', change: 'Ändern', open: 'Öffnen', group_channel: 'Kanal', group_none: 'Keine', no_channels: 'Keine Kanäle gefunden (die Videos haben kein Studio/keinen Kanal in Jellyfin).', update_available: 'TvFin {v} ist verfügbar – ./update.sh auf dem Server ausführen'
         },
         sv: {
             _name: 'Svenska',
@@ -149,7 +149,7 @@ var I18n = (function () {
             favorites: 'Favoriter', latest_in: 'Senast tillagt i {name}', whos_watching: 'Vem tittar?',
             add_user: 'Lägg till användare', sign_out_user: 'Logga ut {name}',
             skip_intro: 'Hoppa över intro', skip_recap: 'Hoppa över sammanfattning', skip_preview: 'Hoppa över förhandstitt',
-            skip_credits: 'Hoppa över eftertexter', cast: 'Medverkande', more_like_this: 'Mer som detta', back_hide: 'Tillbaka dölj', group: 'Gruppera', group_channel: 'Kanal', group_none: 'Ingen', no_channels: 'Inga kanaler hittades (videorna har ingen studio/kanal i Jellyfin).', update_available: 'TvFin {v} finns – kör ./update.sh på servern'
+            skip_credits: 'Hoppa över eftertexter', cast: 'Medverkande', more_like_this: 'Mer som detta', back_hide: 'Tillbaka dölj', group: 'Gruppera', settings: 'Inställningar', change: 'Byt', open: 'Öppna', group_channel: 'Kanal', group_none: 'Ingen', no_channels: 'Inga kanaler hittades (videorna har ingen studio/kanal i Jellyfin).', update_available: 'TvFin {v} finns – kör ./update.sh på servern'
         },
         nb: {
             _name: 'Norsk',
@@ -181,7 +181,7 @@ var I18n = (function () {
             favorites: 'Favoritter', latest_in: 'Nylig lagt til i {name}', whos_watching: 'Hvem ser på?',
             add_user: 'Legg til bruker', sign_out_user: 'Logg ut {name}',
             skip_intro: 'Hopp over intro', skip_recap: 'Hopp over sammendrag', skip_preview: 'Hopp over forhåndsvisning',
-            skip_credits: 'Hopp over rulletekst', cast: 'Medvirkende', more_like_this: 'Mer som dette', back_hide: 'Tilbake skjul', group: 'Grupper', group_channel: 'Kanal', group_none: 'Ingen', no_channels: 'Ingen kanaler funnet (videoene har ikke studio/kanal i Jellyfin).', update_available: 'TvFin {v} er klar – kjør ./update.sh på serveren'
+            skip_credits: 'Hopp over rulletekst', cast: 'Medvirkende', more_like_this: 'Mer som dette', back_hide: 'Tilbake skjul', group: 'Grupper', settings: 'Innstillinger', change: 'Bytt', open: 'Åpne', group_channel: 'Kanal', group_none: 'Ingen', no_channels: 'Ingen kanaler funnet (videoene har ikke studio/kanal i Jellyfin).', update_available: 'TvFin {v} er klar – kjør ./update.sh på serveren'
         }
     };
     var order = ['da', 'en', 'de', 'sv', 'nb'];

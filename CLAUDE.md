@@ -49,6 +49,9 @@ Commit eller push kun, når brugeren beder om det.
 
 Spiller sessioner fra **Funscript Session** (`D:\OneDrive\Code Stuff\Funscript`, se dens `CLAUDE.md`) via dens
 LAN-server på port 8001.
+- `Fun.discover`: finder Funscript selv ved at spørge `GET /tv/hello` på port 8001 for alle adresser i de lokale
+  /24-net (tv'ets IP via `webapis.network.getIp()` – kræver privilegiet `network.public` i `config.xml` –,
+  Jellyfin-serverens adresse og en tidligere Funscript-adresse). Parringsskærmen søger automatisk og viser fundne PC'er.
 - `Fun`: parring (`POST /tv/pair`, `GET /tv/pair/<id>`), nøglen gemmes pr. TvFin-bruger i `localStorage`
   `tvfin-funscript` sammen med adressen og evt. Handy-opsætning. Læser `/tv/sessions`, `/tv/sessions/<id>`,
   `/tv/media/<id>` (Range), `/tv/thumb/<id>`.

@@ -427,6 +427,21 @@ body:not(.playing) #upnext-card { display: none; }
     font-size: 24px;
 }
 
+/* Funscript: PCs found on the network */
+.fun-found .btn { display: inline-block; }
+.fun-search { min-height: 40px; margin: 6px 0 14px; }
+.fun-search .btn { margin-left: 16px; }
+
+/* Settings */
+.settings { padding: 30px 80px; max-width: 1500px; }
+.set-row {
+    display: flex; align-items: center;
+    padding: 26px 30px; margin-bottom: 16px;
+    border-radius: 14px; background: var(--bg2);
+}
+.set-label { width: 300px; font-size: 30px; font-weight: 600; }
+.set-value { flex: 1; min-width: 0; font-size: 26px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
 /* Channels (studios) */
 .card.channel { width: 240px; }
 .card.channel .poster { padding-top: 100%; border-radius: 50%; }

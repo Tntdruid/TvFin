@@ -4,6 +4,16 @@
 
 All changes to TvFin. Update the TV by running `./update.sh` on the server.
 
+## 1.10.0 – 2026-11-16
+
+### Added
+- **⚙ Settings** page (button on the home screen, next to Search): language, the Funscript connection (connect, open or forget) and the app version. The language button moved here from the home screen.
+- **Funscript is found automatically:** *Settings → Connect Funscript* searches the home network for the Funscript app (port 8001) and lists the PCs it finds – select one and allow the TV on the PC. Typing the address still works if nothing is found.
+  - Needs the matching Funscript update (`/tv/hello`).
+
+### Changed
+- *Connect Funscript* moved from *Who's watching?* to Settings, and *Forget connection* moved from the Funscript screen to Settings.
+
 ## 1.9.0 – 2026-11-16
 
 ### Added

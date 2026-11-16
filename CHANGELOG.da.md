@@ -4,6 +4,16 @@
 
 Alle ændringer i TvFin. Opdater TV'et med `./update.sh` på serveren.
 
+## 1.10.0 – 2026-11-16
+
+### Tilføjet
+- **⚙ Indstillinger** (knap på forsiden ved siden af Søg): sprog, Funscript-forbindelsen (tilslut, åbn eller glem) og appens version. Sprogknappen er flyttet hertil fra forsiden.
+- **Funscript findes automatisk:** *Indstillinger → Tilslut Funscript* søger hjemmenetværket igennem efter Funscript-appen (port 8001) og viser de PC'er, den finder – vælg en og godkend tv'et på PC'en. Man kan stadig skrive adressen, hvis intet findes.
+  - Kræver den tilhørende Funscript-opdatering (`/tv/hello`).
+
+### Ændret
+- *Tilslut Funscript* er flyttet fra *Hvem ser med?* til Indstillinger, og *Glem forbindelse* fra Funscript-skærmen til Indstillinger.
+
 ## 1.9.0 – 2026-11-16
 
 ### Nyt

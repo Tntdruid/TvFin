@@ -42,6 +42,55 @@ var Fun = (function () {
     function pair(url) { return getJson(url + '/tv/pair?name=' + encodeURIComponent('TvFin · ' + (Api.isTizen ? 'Samsung TV' : 'Browser')), { method: 'POST' }); }
     function pairStatus(url, id) { return getJson(url + '/tv/pair/' + encodeURIComponent(id)); }
 
+    // ---- Finding Funscript on the network ----
+    // A TV web app can't broadcast (no UDP/mDNS), so we ask every address in the local /24 networks on port 8001.
+    // Networks come from the TV's own IP (Samsung webapis), the Jellyfin server and a previously used Funscript address.
+    function prefixes() {
+        var out = [];
+        function add(host) {
+            var m = /^(\d+)\.(\d+)\.(\d+)\.\d+$/.exec(String(host || ''));
+            if (!m) return;
+            var p = m[1] + '.' + m[2] + '.' + m[3];
+            if (out.indexOf(p) < 0) out.push(p);
+        }
+        function hostOf(url) { var m = /^https?:\/\/([^:/]+)/i.exec(String(url || '')); return m ? m[1] : ''; }
+        try { if (window.webapis && webapis.network && webapis.network.getIp) add(webapis.network.getIp()); } catch (e) { /* not available */ }
+        add(hostOf(Api.state.server));
+        var cfg = config();
+        if (cfg) add(hostOf(cfg.url));
+        return out;
+    }
+
+    // Ask one address; resolves to { url, name, host } for a Funscript PC, or null
+    function probe(host, port, ms) {
+        var ctrl = window.AbortController ? new AbortController() : null;
+        var url = 'http://' + host + ':' + port;
+        return timeout(fetch(url + '/tv/hello', ctrl ? { signal: ctrl.signal } : {}), ms)
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (d) { return d && d.app === 'Funscript Session' ? { url: url, name: d.name || host, host: host } : null; })
+            .catch(function () { if (ctrl) { try { ctrl.abort(); } catch (e) { /* ignore */ } } return null; });
+    }
+
+    // Scan the local networks; onFound is called for each PC as it answers. Resolves with all of them.
+    // isAlive() lets the caller stop the scan (e.g. when leaving the screen).
+    async function discover(onFound, isAlive, extraPrefixes) {
+        var nets = prefixes().concat(extraPrefixes || []);
+        var hosts = [];
+        nets.forEach(function (p) { for (var i = 1; i < 255; i++) hosts.push(p + '.' + i); });
+        var found = [], next = 0, WORKERS = 40;
+        async function worker() {
+            while (next < hosts.length && (!isAlive || isAlive())) {
+                var h = hosts[next++];
+                var hit = await probe(h, DEFAULT_PORT, 1500);
+                if (hit && (!isAlive || isAlive())) { found.push(hit); if (onFound) onFound(hit); }
+            }
+        }
+        var workers = [];
+        for (var w = 0; w < WORKERS; w++) workers.push(worker());
+        await Promise.all(workers);
+        return { found: found, networks: nets };
+    }
+
     function q(cfg) { return '?k=' + encodeURIComponent(cfg.key); }
     function sessions(cfg) { return getJson(cfg.url + '/tv/sessions' + q(cfg)); }
     function session(cfg, id) { return getJson(cfg.url + '/tv/sessions/' + id + q(cfg)); }
@@ -64,7 +113,7 @@ var Fun = (function () {
     function tick(cfg, seconds) { return post(cfg, '/tv/stats/tick', { seconds: seconds }); }
 
     return {
-        config: config, save: save, baseUrl: baseUrl, pair: pair, pairStatus: pairStatus,
+        config: config, save: save, baseUrl: baseUrl, pair: pair, pairStatus: pairStatus, discover: discover,
         sessions: sessions, session: session, mediaUrl: mediaUrl, thumbUrl: thumbUrl,
         resume: resume, saveResume: saveResume, played: played, tick: tick
     };
