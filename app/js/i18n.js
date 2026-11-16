@@ -39,7 +39,7 @@ var I18n = (function () {
             fun_unreachable: 'Kunne ikke nå Funscript på {s}. Er "Styr fra mobilen" slået til, og kører appen?',
             fun_sessions: 'Sessioner', fun_no_sessions: 'Ingen gemte sessioner endnu – byg en i Funscript-appen.',
             fun_no_clips: 'Sessionen har ingen klip.', fun_forget: 'Glem forbindelse', fun_clip: 'Klip {i}/{n}', fun_clips: 'klip',
-            fun_hint: '◀ ▶ spol 10 sek · ▲ næste klip · ▼ forrige klip · OK pause · Tilbage stop',
+            fun_resume: 'Fortsæt «{name}» fra {t}', fun_hint: '◀ ▶ spol 10 sek · ▲ næste klip · ▼ forrige klip · OK pause · Tilbage stop',
             handy_ready: 'Handy klar', handy_none: 'uden Handy', handy_on: 'Handy', handy_error: 'Handy: {e}',
             handy_offline: 'Handy er ikke online – tjek at den er på wifi', handy_bad_app: 'Ugyldigt Application ID',
             handy_too_long: 'Sessionen er for lang til Handy', handy_upload_failed: 'Upload af script til Handy fejlede', group: 'Gruppér', group_channel: 'Kanal', group_none: 'Ingen', no_channels: 'Ingen kanaler fundet (videoerne har intet studie/kanal i Jellyfin).', update_available: 'Ny version {v} af TvFin er klar – kør ./update.sh på serveren'
@@ -82,7 +82,7 @@ var I18n = (function () {
             fun_unreachable: 'Could not reach Funscript at {s}. Is "Control from phone" on, and is the app running?',
             fun_sessions: 'Sessions', fun_no_sessions: 'No saved sessions yet – build one in the Funscript app.',
             fun_no_clips: 'The session has no clips.', fun_forget: 'Forget connection', fun_clip: 'Clip {i}/{n}', fun_clips: 'clips',
-            fun_hint: '◀ ▶ seek 10 sec · ▲ next clip · ▼ previous clip · OK pause · Back stop',
+            fun_resume: 'Continue «{name}» from {t}', fun_hint: '◀ ▶ seek 10 sec · ▲ next clip · ▼ previous clip · OK pause · Back stop',
             handy_ready: 'Handy ready', handy_none: 'no Handy', handy_on: 'Handy', handy_error: 'Handy: {e}',
             handy_offline: 'Handy is not online – check that it is on WiFi', handy_bad_app: 'Invalid Application ID',
             handy_too_long: 'The session is too long for the Handy', handy_upload_failed: 'Uploading the script to the Handy failed', group: 'Group', group_channel: 'Channel', group_none: 'None', no_channels: 'No channels found (the videos have no studio/channel in Jellyfin).', update_available: 'TvFin {v} is available – run ./update.sh on the server'

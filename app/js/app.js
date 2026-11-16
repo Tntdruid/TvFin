@@ -803,18 +803,27 @@ var App = (function () {
     Screens.funscript = function () {
         var cfg = Fun.config();
         return {
-            initialFocus: '.grid [data-action="fun-play"]',
+            initialFocus: '[data-action="fun-resume"], .grid [data-action="fun-play"]',
             render: async function () {
                 if (!cfg) { go('funpair', {}, true); return ''; }
                 var html = '<div class="screen" data-scroll="y"><header class="topbar"><div class="logo">TvFin</div>' +
                     '<div class="who">🎬 Funscript · ' + esc(cfg.handy ? t('handy_ready') : t('handy_none')) + '</div>' +
                     '<div class="btn small focusable" data-action="fun-forget" data-key="fun-forget">' + esc(t('fun_forget')) + '</div></header>';
-                var r;
-                try { r = await Fun.sessions(cfg); } catch (e) {
+                var r, resume = null;
+                try {
+                    var both = await Promise.all([Fun.sessions(cfg), Fun.resume(cfg)]);
+                    r = both[0]; resume = both[1];
+                } catch (e) {
                     if (e.status === 403) { Fun.save(null); go('funpair', {}, true); return ''; }
                     return html + '<p class="error pad">' + esc(t('fun_unreachable', { s: cfg.url })) + '</p></div>';
                 }
                 var list = (r && r.sessions) || [];
+                // Continue where the last session was left (on the TV or the PC)
+                if (resume && resume.ms > 30000 && resume.ms < resume.totalMs - 30000) {
+                    html += '<section class="row"><div class="btn primary focusable" data-action="fun-resume" data-id="' + resume.sessionId +
+                        '" data-ms="' + resume.ms + '" data-key="fun-resume">▶ ' +
+                        esc(t('fun_resume', { name: resume.name, t: Player.fmt(resume.ms) })) + '</div></section>';
+                }
                 html += '<section class="row"><h2>' + esc(t('fun_sessions')) + '</h2></section><div class="grid list">' + list.map(function (s) {
                     var meta = [Player.fmt(s.totalMs), s.clipCount + ' ' + t('fun_clips')];
                     if (s.createdAt) { var d = new Date(s.createdAt * 1000); meta.push(d.getDate() + '/' + (d.getMonth() + 1) + ' ' + d.getFullYear()); }
@@ -827,10 +836,11 @@ var App = (function () {
                 return html + '</div>';
             },
             action: function (a, el) {
-                if (a === 'fun-play') {
+                if (a === 'fun-play' || a === 'fun-resume') {
                     var entry = stack[stack.length - 1];
                     if (entry && Nav.current) entry.focusKey = Nav.current.getAttribute('data-key');
-                    FunPlayer.start(cfg, el.getAttribute('data-id'), function () { render(); });
+                    FunPlayer.start(cfg, el.getAttribute('data-id'), function () { render(); },
+                        a === 'fun-resume' ? Number(el.getAttribute('data-ms')) : 0);
                 } else if (a === 'fun-forget') {
                     Fun.save(null);
                     stack = [];

@@ -48,9 +48,25 @@ var Fun = (function () {
     function mediaUrl(cfg, videoId) { return cfg.url + '/tv/media/' + videoId + q(cfg); }
     function thumbUrl(cfg, videoId) { return cfg.url + '/tv/thumb/' + videoId + q(cfg); }
 
+    // Reports back to the PC app: played sessions, played time and where a session was left.
+    // The position is the same one the PC keeps, so a session can be continued on either.
+    function post(cfg, path, body) {
+        return getJson(cfg.url + path + q(cfg), {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body || {})
+        }).catch(function (e) { console.warn('Funscript', path, e); });
+    }
+    function resume(cfg) {
+        return getJson(cfg.url + '/tv/resume' + q(cfg)).then(function (r) { return r.resume || null; },
+            function () { return null; });
+    }
+    function saveResume(cfg, sessionId, ms) { return post(cfg, '/tv/resume', sessionId ? { sessionId: sessionId, ms: Math.round(ms) } : {}); }
+    function played(cfg, sessionId) { return post(cfg, '/tv/sessions/' + sessionId + '/played'); }
+    function tick(cfg, seconds) { return post(cfg, '/tv/stats/tick', { seconds: seconds }); }
+
     return {
         config: config, save: save, baseUrl: baseUrl, pair: pair, pairStatus: pairStatus,
-        sessions: sessions, session: session, mediaUrl: mediaUrl, thumbUrl: thumbUrl
+        sessions: sessions, session: session, mediaUrl: mediaUrl, thumbUrl: thumbUrl,
+        resume: resume, saveResume: saveResume, played: played, tick: tick
     };
 })();
 
@@ -154,6 +170,18 @@ var FunPlayer = (function () {
     var active = false, cfg = null, sess = null, idx = 0, backend = null, posMs = 0, started = false;
     var onExit = null, hideTimer = null, seekTimer = null, seekTarget = null, driftTimer = null, switching = false;
     var handyOn = false;
+    var markedPlayed = false, statsTimer = null, lastSavedPos = 0;
+    var TICK_S = 30;   // played time is sent in 30 s steps, the position every 10 s
+
+    function isPlaying() { return !!(backend && started && !switching && !backend.paused()); }
+
+    // Where we are, for "continue" on the TV or the PC (cleared when the session is finished)
+    function savePosition(force) {
+        if (!sess || (!force && Date.now() - lastSavedPos < 10000)) return;
+        lastSavedPos = Date.now();
+        var finished = posMs >= sess.totalMs - 5000;
+        Fun.saveResume(cfg, finished ? null : sess.id, posMs);
+    }
 
     function $(id) { return document.getElementById(id); }
     var el = {};
@@ -215,6 +243,7 @@ var FunPlayer = (function () {
             started: function () {
                 started = true;
                 switching = false;
+                if (!markedPlayed) { markedPlayed = true; Fun.played(cfg, sess.id); }
                 if (handyOn) Handy.play(posMs);
                 showUi();
             },
@@ -229,13 +258,14 @@ var FunPlayer = (function () {
         var c = sess.clips[idx];
         if (ms >= c.endMs) { nextClip(); return; }
         posMs = c.offsetMs + Math.max(0, ms - c.startMs);
+        savePosition(false);
         if (!el.ui.classList.contains('hidden')) updateUi();
     }
 
     function nextClip() {
         if (!active || switching) return;   // ignore stray events while a clip is opening
         if (idx + 1 < sess.clips.length) playClip(idx + 1, 0);
-        else stop();
+        else { posMs = sess.totalMs; stop(); }   // finished: the saved position is cleared
     }
 
     function seekTo(ms) {
@@ -262,13 +292,15 @@ var FunPlayer = (function () {
     function togglePause() {
         if (!backend || !started) return;
         if (backend.paused()) { backend.play(); if (handyOn) Handy.play(posMs); }
-        else { backend.pause(); if (handyOn) Handy.stop(); }
+        else { backend.pause(); if (handyOn) Handy.stop(); savePosition(true); }
         setTimeout(function () { showUi(); }, 50);
     }
 
-    async function start(config, sessionId, exitCallback) {
+    // startMs: where in the session to begin (from "continue"); 0 = from the start
+    async function start(config, sessionId, exitCallback, startMs) {
         els();
         cfg = config; onExit = exitCallback; active = true; idx = 0; posMs = 0; sess = null; handyOn = false;
+        markedPlayed = false; lastSavedPos = 0;
         document.body.classList.add('playing');
         el.title.textContent = 'Funscript';
         el.sub.textContent = '';
@@ -295,7 +327,10 @@ var FunPlayer = (function () {
             }
         }
         if (!active) return;
-        playClip(0, 0);
+        var from = Math.max(0, Math.min(startMs || 0, sess.totalMs - 5000));
+        var first = clipAt(from);
+        playClip(first, from - sess.clips[first].offsetMs);
+        statsTimer = setInterval(function () { if (isPlaying()) Fun.tick(cfg, TICK_S); }, TICK_S * 1000);
         // Keep the Handy in step with the video (it drifts a little over long sessions)
         driftTimer = setInterval(function () {
             if (!handyOn || !started || switching || !backend || backend.paused()) return;
@@ -307,8 +342,9 @@ var FunPlayer = (function () {
     function stop() {
         if (!active) return;
         active = false;
-        clearTimeout(hideTimer); clearTimeout(seekTimer); clearInterval(driftTimer);
+        clearTimeout(hideTimer); clearTimeout(seekTimer); clearInterval(driftTimer); clearInterval(statsTimer);
         seekTarget = null;
+        if (started || posMs > 0) savePosition(true);
         if (handyOn) Handy.stop();
         if (backend) backend.stop();
         backend = null; sess = null; started = false; switching = false;
