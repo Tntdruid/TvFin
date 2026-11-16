@@ -38,8 +38,9 @@ GitHub-release:
    Ny funktion = minor, rettelse = patch.
 2. Tilføj et afsnit øverst i **både** `CHANGELOG.md` og `CHANGELOG.da.md` (`## X.Y.Z – ÅÅÅÅ-MM-DD`, `### Added/Tilføjet`
    osv.). Opdater `README.md`/`README.da.md` hvis en funktion skal nævnes i listen.
-3. Commit-besked: `vX.Y.Z: kort beskrivelse` (se `git log`), tag `vX.Y.Z`, push og lav GitHub-release med changelog-
-   afsnittet. Tv'ets "ny version"-besked læser GitHub, så releasen er vigtig.
+3. Commit-besked: `vX.Y.Z: kort beskrivelse` (se `git log`), tag `vX.Y.Z`, push (også tagget) og lav GitHub-release
+   med changelog-afsnittet. Første tag/release var v1.9.0. Tv'ets "ny version"-besked læser `app/config.xml` på `main`
+   (raw.githubusercontent), så versionen i `config.xml` er det, der tæller for tv'et.
 4. Brugeren opdaterer tv'et med `./update.sh` på sin Linux-server (Docker; tv'ets IP gemmes i `.tv-ip`).
 
 Commit eller push kun, når brugeren beder om det.
@@ -58,8 +59,5 @@ LAN-server på port 8001.
 - `FunPlayer.start(cfg, id, exit, startMs)`: afspiller klip efter klip; sessionstid = `clip.offsetMs + (videoTid -
   clip.startMs)`; Handy stoppes ved klipskift og startes igen ved `started`; drift-korrektion hvert 5. sek (> 300 ms).
 - Ændringer her kræver ofte en matchende ændring i Funscripts `remote.py` (og omvendt).
-
-**Ikke udgivet endnu:** commit `8d67c2e` (Funscript melder tilbage + fortsæt) er ikke med i en version/changelog –
-kommer med ved næste "push".
 
 **Idéer, ikke lavet:** vibratorer via Intiface fra tv'et, tempo (playback_rate), edge-spil og stemme-coach på tv'et.

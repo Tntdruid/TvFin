@@ -4,6 +4,13 @@
 
 Alle ændringer i TvFin. Opdater TV'et med `./update.sh` på serveren.
 
+## 1.9.0 – 2026-11-16
+
+### Nyt
+- **Funscript: fortsæt hvor du slap.** Stopper du midt i en session, står *▶ Fortsæt «navn» fra …* øverst på Funscript-skærmen. Positionen deles med Funscript-appen på PC'en, så du kan stoppe på tv'et og fortsætte på PC'en – eller omvendt.
+- **Funscript: tv'et melder tilbage til PC-appen.** En session, der afspilles på tv'et, tæller som afspillet, og spilletiden kommer med i Funscripts 📊 Statistik.
+- Kræver den tilhørende Funscript-opdatering (nye tv-endpoints til spilletid og position).
+
 ## 1.8.0 – 2026-11-16
 
 ### Nyt

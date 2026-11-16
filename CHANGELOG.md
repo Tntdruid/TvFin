@@ -4,6 +4,13 @@
 
 All changes to TvFin. Update the TV by running `./update.sh` on the server.
 
+## 1.9.0 – 2026-11-16
+
+### Added
+- **Funscript: continue where you left off.** When you stop in the middle of a session, *▶ Continue «name» from …* is shown at the top of the Funscript screen. The position is shared with the Funscript app on the PC, so you can stop on the TV and go on at the PC – or the other way round.
+- **Funscript: the TV reports back to the PC app.** A session played on the TV counts as played, and the played time shows up in Funscript's 📊 Statistics.
+- Needs the matching Funscript update (new TV endpoints for played time and position).
+
 ## 1.8.0 – 2026-11-16
 
 ### Added

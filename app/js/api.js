@@ -1,7 +1,7 @@
 /* Jellyfin API client. Written without ?. and ?? so it runs on older Tizen TVs. */
 var Api = (function () {
     var CLIENT = 'TvFin';
-    var VERSION = '1.8.0';
+    var VERSION = '1.9.0';
     var STORE_KEY = 'tvfin';
     var isTizen = !!window.tizen;
 
