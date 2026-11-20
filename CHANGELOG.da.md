@@ -4,6 +4,13 @@
 
 Alle ændringer i TvFin. Opdater TV'et med `./update.sh` på serveren.
 
+## 1.11.0 – 2026-11-20
+
+### Tilføjet
+- **Funscript: tempo.** CH + / blå gør en session 5 % hurtigere, CH – / gul 5 % langsommere (50–150 %), grøn går tilbage til 100 %. Videoen og Handy'en følger med. Tv'ets egen afspiller (AVPlay) kan ikke spille fx 105 %, så klippet afspilles da med browserens video-afspiller; kan tv'et ikke afspille filen sådan, går den tilbage til 100 % og siger det.
+- **Funscript: vibratorer og strokere via Intiface.** Slå *Indstillinger → 📳 Intiface* til; tv'et forbinder til Intiface Central på Funscript-PC'en (`ws://<PC>:12345`). Motor 1 følger sessionens `vib`-spor og motor 2 `vib2` (som på PC'en), strokere som en OSR følger stroke-scriptet. Alt stoppes ved pause, spoling, klipskift og stop. Intiface Central skal lytte på netværket ("Listen on all network interfaces").
+  - Kræver Funscript 1.1.0 (sender vib-sporene til tv'et).
+
 ## 1.10.0 – 2026-11-16
 
 ### Tilføjet

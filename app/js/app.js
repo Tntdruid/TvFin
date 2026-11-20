@@ -761,6 +761,9 @@ var App = (function () {
                     '<div class="set-row"><div class="set-label">🌐 ' + esc(t('language')) + '</div><div class="set-value">' + esc(I18n.name) + '</div>' +
                     '<div class="btn small focusable" data-action="lang" data-key="lang">' + esc(t('change')) + '</div></div>' +
                     '<div class="set-row"><div class="set-label">🎬 Funscript</div><div class="set-value">' + esc(funValue) + '</div>' + funButtons + '</div>' +
+                    (cfg ? '<div class="set-row"><div class="set-label">📳 Intiface</div><div class="set-value">' +
+                        esc(cfg.intiface ? t('intiface_on', { s: Fun.intifaceUrl(cfg) }) : t('intiface_off')) + '</div>' +
+                        '<div class="btn small focusable" data-action="intiface" data-key="intiface">' + esc(cfg.intiface ? t('turn_off') : t('turn_on')) + '</div></div>' : '') +
                     '<div class="set-row"><div class="set-label">ℹ ' + esc(t('version')) + '</div><div class="set-value">TvFin ' + esc(Api.version) + '</div></div>' +
                     '</div></div>';
             },
@@ -769,6 +772,10 @@ var App = (function () {
                 else if (a === 'fun-connect') go('funpair');
                 else if (a === 'fun-open') go('funscript');
                 else if (a === 'fun-forget') { Fun.save(null); refresh(); }
+                else if (a === 'intiface') {
+                    var c = Fun.config();
+                    if (c) { c.intiface = !c.intiface; Fun.save(c); if (!c.intiface) Intiface.disconnect(); refresh(); }
+                }
             }
         };
     };
@@ -1070,7 +1077,8 @@ var App = (function () {
 
     function registerTvKeys() {
         try {
-            ['MediaPlayPause', 'MediaPlay', 'MediaPause', 'MediaStop', 'MediaFastForward', 'MediaRewind'].forEach(function (key) {
+            ['MediaPlayPause', 'MediaPlay', 'MediaPause', 'MediaStop', 'MediaFastForward', 'MediaRewind',
+             'ChannelUp', 'ChannelDown', 'ColorF1Green', 'ColorF2Yellow', 'ColorF3Blue'].forEach(function (key) {
                 try { tizen.tvinputdevice.registerKey(key); } catch (e) { /* not available */ }
             });
         } catch (e) { /* not Tizen */ }

@@ -40,6 +40,8 @@ var Player = (function () {
         this.time = function () { try { return av.getCurrentTime(); } catch (e) { return 0; } };
         this.duration = function () { try { return av.getDuration(); } catch (e) { return 0; } };
         // Select the n-th audio track in the file (direct play). Returns true on success.
+        // AVPlay only has whole-number trick-play speeds, so smooth tempo (e.g. 105 %) isn't possible here
+        this.setRate = function (r) { return r === 1; };
         this.selectAudio = function (n) {
             try {
                 var tracks = av.getTotalTrackInfo().filter(function (tr) { return tr.type === 'AUDIO'; });
@@ -98,7 +100,13 @@ var Player = (function () {
         this.time = function () { return video.currentTime * 1000; };
         this.duration = function () { return (video.duration || 0) * 1000; };
         this.selectAudio = function () { return false; };
+        // Playback rate (tempo); returns false if the browser/TV ignores it
+        this.setRate = function (r) {
+            try { video.defaultPlaybackRate = r; video.playbackRate = r; } catch (e) { return false; }
+            return Math.abs(video.playbackRate - r) < 0.001;
+        };
         this.stop = function () {
+            try { video.defaultPlaybackRate = 1; video.playbackRate = 1; } catch (e) { /* ignore */ }
             listeners.forEach(function (l) { video.removeEventListener(l[0], l[1]); });
             listeners = [];
             if (hls) { hls.destroy(); hls = null; }
@@ -722,7 +730,10 @@ var Player = (function () {
     return {
         start: start, stop: stop, onKey: onKey, fmt: fmt,
         // A fresh video backend (AVPlay on the TV, <video> in a browser) – used by the Funscript player
-        makeBackend: function () { return Api.isTizen && window.webapis && webapis.avplay ? new AvPlayBackend() : new HtmlBackend(); },
+        // forceHtml: use <video> even on the TV (needed for smooth tempo in the Funscript player)
+        makeBackend: function (forceHtml) {
+            return !forceHtml && Api.isTizen && window.webapis && webapis.avplay ? new AvPlayBackend() : new HtmlBackend();
+        },
         get active() { return active; }
     };
 })();

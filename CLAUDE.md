@@ -61,6 +61,14 @@ LAN-server på port 8001.
 - `Handy`: port af Funscripts `web/handy.js` (API v3, HSSP), ES5-venlig.
 - `FunPlayer.start(cfg, id, exit, startMs)`: afspiller klip efter klip; sessionstid = `clip.offsetMs + (videoTid -
   clip.startMs)`; Handy stoppes ved klipskift og startes igen ved `started`; drift-korrektion hvert 5. sek (> 300 ms).
+- **Tempo** (50–150 %, CH +/–, blå/gul, grøn = 100 %): `<video>.playbackRate` + Handy `playback_rate`. AVPlay kan kun
+  hele hastigheder, så ved tempo ≠ 100 % åbnes klippet med `Player.makeBackend(true)` (`<video>`); kan tv'ets `<video>`
+  ikke afspille filen, går den tilbage til AVPlay ved 100 % med en besked. (Skift til `<video>` er ikke prøvet på tv.)
+- **Intiface** (`Intiface` i `funscript.js`): lille Buttplug v3-klient over ren WebSocket (buttplug-biblioteket er for
+  nyt til ældre tv). Slås til under Indstillinger (`cfg.intiface`); adresse `ws://<Funscript-PC>:12345`
+  (`Fun.intifaceUrl`). Vibratorer følger sessionens `vib`/`vib2` (motor 1/2) med maks ~10 kommandoer/sek, strokere
+  følger stroke-scriptet (`LinearCmd`). Alt stoppes ved pause, spoling, klipskift og stop. Intiface Central skal lytte
+  på netværket. Til test: en falsk Buttplug-server i node (WebSocket i hånden) er nok.
 - Ændringer her kræver ofte en matchende ændring i Funscripts `remote.py` (og omvendt).
 
-**Idéer, ikke lavet:** vibratorer via Intiface fra tv'et, tempo (playback_rate), edge-spil og stemme-coach på tv'et.
+**Idéer, ikke lavet:** vib-styrke på tv'et, edge-spil og stemme-coach på tv'et.

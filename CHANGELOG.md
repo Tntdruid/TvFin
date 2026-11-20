@@ -4,6 +4,13 @@
 
 All changes to TvFin. Update the TV by running `./update.sh` on the server.
 
+## 1.11.0 – 2026-11-20
+
+### Added
+- **Funscript: tempo.** CH + / blue makes a session 5 % faster, CH – / yellow 5 % slower (50–150 %), green goes back to 100 %. The video and the Handy follow. The TV's own player (AVPlay) can't play at e.g. 105 %, so then the clip is played with the browser video player; if the TV can't play the file that way, it goes back to 100 % and says so.
+- **Funscript: vibrators and strokers via Intiface.** Turn on *Settings → 📳 Intiface*; the TV connects to Intiface Central on the Funscript PC (`ws://<PC>:12345`). Motor 1 follows the session's `vib` track and motor 2 `vib2` (like on the PC), strokers such as an OSR follow the stroke script. Everything stops on pause, seek, clip change and stop. Intiface Central must listen on the network ("Listen on all network interfaces").
+  - Needs Funscript 1.1.0 (sends the vib tracks to the TV).
+
 ## 1.10.0 – 2026-11-16
 
 ### Added
